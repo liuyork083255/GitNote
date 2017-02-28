@@ -1,0 +1,33 @@
+参考链接：http://blog.csdn.net/bangrenzhuce/article/details/52574879
+
+方案一
+	Public User selectUser(String name,String area); 
+	
+	<select id="selectUser" resultMap="BaseResultMap" parameterType="java.lang.String">  
+    	select  *  from user_user_t   where user_name = #{0} and user_area=#{1}  
+	</select>  
+
+方案二
+	Public User selectUser(Map paramMap);  
+	
+	<select id=" selectUser" resultMap="BaseResultMap">  
+   		select  *  from user_user_t   where user_name = #{userName，jdbcType=VARCHAR} and user_area=#{userArea,jdbcType=VARCHAR}  
+	</select>  
+	
+方案三
+	Public User selectUser(@param(“userName”)Stringname,@param(“userArea”)String area); 
+	
+	<select id=" selectUser" resultMap="BaseResultMap">  
+   		select  *  from user_user_t   where user_name = #{userName，jdbcType=VARCHAR} and user_area=#{userArea,jdbcType=VARCHAR}  
+	</select> 
+	
+目前我采用第三种，使用比较方便
+
+
+
+
+
+
+
+
+
