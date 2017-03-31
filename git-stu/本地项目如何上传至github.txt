@@ -1,0 +1,54 @@
+1 首先在github上面有自己的账户，然后在里面创建一个新仓库，同时记下这个仓库的ssh坐标或者http坐标
+	例如:你可以在右边靠中那里找到一个按钮“New Repository”，点击过后，填入项目名称、说明和网址过后就可以创建了，
+		然后会出现一个提示页面，记下类似git@github.com:XXX/XXX.git的地址，这个就是你这个项目的地址了。
+
+2 本地要安装git客户端
+	设置好相关配置，比如邮箱和用户名等
+
+
+3 因为在github和git客户端进行数据传输，要使用ssh协议，所以要在本地生成ssh的公私秘钥
+
+4 随便在哪个目录点击右键进入git Bash，然后输入 ssh-keygen -t rsa -C '这里输入github的邮箱'
+	提醒你输入key的名称，输入如id_rsa
+	接着就是要输入这个秘钥生成的位置以及密码设置，其实都可以不用管，直接一直回车
+	生成好后会有提示这个秘钥生成的位置，里面有三个文件，只需要打开公钥那个然后复制到github上面
+	（github公钥的地址：settings->SSH and GPG keys ->New SSH key,Title随便填写，内容就是公钥的内容，保存提交即可）
+	（这里要注意：ssh秘钥生成的位置必须放在C:\Documents and Settings\Administrator\.ssh\ 目 录下，但是测试下来
+		win64的是在C:\Windows\SysWOW64里面也是可以的 ，别的地方就不可以了）
+
+5 然后在本地找到要上传的项目，在项目的同级右键进入git Bash
+	1 git init 初始化
+	2 git add . 
+		一般如果你想分享这个文件夹里的所有代码，就在 add后面加“.”，
+		上面的例子就是这样，如果传指定的，只需要把“.”改为文件名即可
+	3 git commit -m 'xxx'
+		xxx：这里是上传的信息，上传成功后就会在这个项目后面显示这个信息
+	4 git remote add origin git@github.com:liuyork083255/Dome2.git
+		后面这个地址就是前面新建仓库项目的地址
+	5 git push -u origin master
+		经过测试，输入这个的时候会报一个错误：
+		提示出错信息：error:failed to push som refs to …….
+		解决办法：
+			先输入$ git pull origin master //先把远程服务器github上面的文件拉下来   Esc + ：wq  回车退出编辑框
+			再输入$ git push origin master
+
+
+	注意一些问题，经过我的一些测试，如果项目太大，会上传失败
+	还有就是再输入上面 第 5 步里面的指令的时候，会出现一些问题，具体可以参考下面这个链接：
+http://zhidao.baidu.com/link?url=au4HBn0vxGZiJ0NeioOWZxEATJdFwQMuncUhYHkhiYGr-9WQHkBYJ4oXd2nHbI-PNbFChthEL8Zup4xmQJGuHlrDZ2VSI6-v2uzR-jyA8xC
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
