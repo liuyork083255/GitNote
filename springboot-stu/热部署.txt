@@ -1,0 +1,25 @@
+首先是加入 热部署依赖
+
+    <!--热部署依赖-->
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>springloaded</artifactId>
+      <version>1.2.4.RELEASE</version>
+    </dependency>
+
+然后在哎build模块里面
+加入
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin </artifactId>
+	上面是支持用maven插件启动项目，即使用命令：mvn spring-boot:run  
+
+        <dependencies>
+          <!--这个依赖必须结合上面的插件使用，也就是每次启动项目的时候用这个插件启动，修改代码后每次要重新编译 Ctrl+Shift+F9 -->
+          <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>springloaded</artifactId>
+            <version>1.2.4.RELEASE</version>
+          </dependency>
+        </dependencies>
+      </plugin>

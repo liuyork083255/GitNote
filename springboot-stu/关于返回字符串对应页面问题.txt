@@ -1,0 +1,83 @@
+首先要了解，springboot默认是支持返回html页面的，但是测试下来返回 index并不能跳转到 inde.html页面
+
+原因1：没有引入依赖
+<dependency>
+<groupId>org.springframework.boot</groupId>
+<artifactId>spring-boot-starter-thymeleaf</artifactId>
+</dependency>
+
+原因2：引入依赖但是路径不对
+这个依赖的默认路径是
+########################################################
+###THYMELEAF (ThymeleafAutoConfiguration)
+########################################################
+#spring.thymeleaf.prefix=classpath:/templates/            ---------------是在类路径下面的templates目录下的页面
+#spring.thymeleaf.suffix=.html
+#spring.thymeleaf.mode=HTML5
+#spring.thymeleaf.encoding=UTF-8
+# ;charset=<encoding> is added
+#spring.thymeleaf.content-type=text/html
+# set to false for hot refresh
+spring.thymeleaf.cache=false
+
+这些属性都是可以在全局配置文件中进行修改的
+
+注意：如果templates这个下面要建立不同的目录，那么返回的路径下面就要 "html/index" 就可以进入到html目录下面的index.html页面了
+
+
+如何使用JSP页面呢？
+首先是自己测试过，如果使用了templtaes返回html，那么再使用jsp是无效的，会默认去找html的后缀名称
+所有是首先关闭自己的templtaes依赖设置
+
+然后就是配置JSP
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.servlet</groupId>
+      <artifactId>jstl</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-tomcat</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.tomcat.embed</groupId>
+      <artifactId>tomcat-embed-jasper</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+加入过后，就可以在全局配置文件中设置JSP页面的目录了，
+# 页面默认前缀目录
+spring.mvc.view.prefix=/WEB-INF/jsp/
+# 响应页面默认后缀
+spring.mvc.view.suffix=.jsp
+
+以上配置好后就可以实现返回字符串跳转到jsp页面了
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,26 @@
+springboot框架里面是可以直接访问静态文件，不像spirngmvc里面配置的那个*   或者.do  需要特殊设计，
+springboot框架里面已经设置好了。
+
+
+还有就是  如果静态文件是放在webapp下面的，那只要输入正确的目录就可访问当这个目录下面的文件了
+如果webapp目录下面是没有这个文件，那么就会到resources的类路径下面的static，public，resources去寻找这个文件。
+注意是类路径下面的这个几个文件里面去找，而不是在类路径resources下面找，这是找不到的，
+
+举列：
+
+	输入localhost/img/index.html
+	首先是看看webapp下的img中的index.html  
+	如果没有就去resources下面的static，public，resources这个三个目录下面的img里面的index.html
+	再没有就报错了。
+
+
+如果有修改就加入配置类：
+@Configuration
+public class MyWebAppConfigurer
+extends WebMvcConfigurerAdapter {
+@Override
+public void addResourceHandlers(ResourceHandlerRegistry registry) {
+registry.addResourceHandler("/myres/**").addResourceLocations("classpath:/myres/");
+super.addResourceHandlers(registry);
+}
+}

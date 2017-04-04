@@ -1,0 +1,85 @@
+首先知晓  ：
+
+servlet filter listerner都是属于servlet范畴，而拦截器是另外一种
+
+对于前三种实现方式都是一样的，自己写的类实现或者继承响应的接口或者类
+要么是通过代码注入spring容器（@configuration+@Bean方式）
+要么就是通过注解方式：
+	servlet的注解是 @WebServlet、
+	filter的注解是 @WebFilter、
+	listerner的祝注解是 @WebListener
+
+例如：
+//@WebServlet(urlPatterns="/myServlet1/*", description="Servlet的说明")
+//@WebFilter(filterName="myFilter",urlPatterns="/*")
+//@WebListener(要什么就实现那个接口 比如 HttpSessionListener ServletContextListener )
+
+但是加了这个注解后并不会自动注入，因为这三个注解没有被扫描到
+所以需要在@SpirngBootApplication这里再加上一个注解
+
+@ServletComponentScan//这个就是扫描相应的Servlet包;-------------这个就可以扫描的上面的三个注解了
+
+
+
+
+-------------------------------------下面是拦截器
+HandlerInterceptor 的功能跟过滤器类似，但是提供更精细的的控制能力：在request被响应之前、request被响
+应之后、视图渲染之前以及request全部结束之后。我们不能通过拦截器修改request内容，但是可以通过抛出异常（或
+者返回false）来暂停request的执行。
+
+
+实现自定义拦截器只需要3步：
+1、创建我们自己的拦截器类并实现HandlerInterceptor 接口。
+2、创建一个Java类继承WebMvcConfigurerAdapter，并重写addInterceptors 方法。
+2、实例化我们自定义的拦截器，然后将对像手动添加到拦截器链中（在addInterceptors方法中添加）。
+
+举列：新建两个自定义拦截器
+
+步骤1       -------不需要任何的注解
+public class MyInterceptor1 implements HandlerInterceptor{}
+public class MyInterceptor2 implements HandlerInterceptor{}
+
+步骤2
+@Configuration public class MyWebAppConfigurer extends WebMvcConfigurerAdapter {
+	publicvoid addInterceptors(InterceptorRegistry registry) {
+	// 多个拦截器组成一个拦截器链
+	// addPathPatterns 用于添加拦截规则
+	// excludePathPatterns 用户排除拦截
+	registry.addInterceptor(new MyInterceptor1()).addPathPatterns("/**");
+	registry.addInterceptor(new MyInterceptor2()).addPathPatterns("/**");
+	super.addInterceptors(registry);
+	}
+}
+最后强调一点：只有经过DispatcherServlet 的请求，才会走拦截器链，我们自定义的Servlet 请求是不会被拦截的，比
+如我们自定义的Servlet地址http://localhost:8080/myServlet1 是不会被拦截器拦截的。并且不管是属于哪个Servlet
+只要复合过滤器的过滤规则，过滤器都会拦截。
+最后说明下，我们上面用到的WebMvcConfigurerAdapter 并非只是注册添加拦截器使用，其顾名思义是做Web配置
+用的，它还可以有很多其他作用，可以加入别的很多Bean
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
