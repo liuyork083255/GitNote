@@ -25,6 +25,16 @@ spring.thymeleaf.cache=false
 注意：如果templates这个下面要建立不同的目录，那么返回的路径下面就要 "html/index" 就可以进入到html目录下面的index.html页面了
 
 
+注意：如果上面两个步骤都设置了都还出错，那么极有可能是html里面的格式不正确，因为使用了templates的html必须符合<></>规则，不要忘记了</>,及时是单元素标签
+
+
+
+
+
+
+
+
+
 如何使用JSP页面呢？
 首先是自己测试过，如果使用了templtaes返回html，那么再使用jsp是无效的，会默认去找html的后缀名称
 所有是首先关闭自己的templtaes依赖设置
