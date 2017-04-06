@@ -1,0 +1,67 @@
+如果使用spirngboot 来文件上传，那么这个依赖就已经包含了文件上传的模块了
+
+<dependency>
+	<groupId>org.springframework.boot</groupId>
+	<artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+
+前端代码：
+<form method="POST" enctype="multipart/form-data" action="/upload">
+	<p>文件：<input type="file" name="file" /></p>
+	<p><input type="submit" value="上传" /></p>
+</form>
+
+后端代码：
+public String handleFileUpload(@RequestParam("file")MultipartFile file){
+	f(!file.isEmpty()){
+	
+	}else{
+	
+	}
+}
+这样就可以获取到文件了
+
+如果要对上传的文件进行一个校验：
+@Bean
+public MultipartConfigElement multipartConfigElement() {
+	MultipartConfigFactory factory = new MultipartConfigFactory();
+	//// 设置文件大小限制,超了，页面会抛出异常信息，这时候就需要进行异常信息的处理了;
+	factory.setMaxFileSize("128KB"); //KB,MB
+	/// 设置总上传数据总大小
+	factory.setMaxRequestSize("256KB");
+	//Sets the directory location where files will be stored.
+	//factory.setLocation("路径地址");
+	returnfactory.createMultipartConfig();
+}
+
+
+如果是一次性上传多个文件：
+前端：
+<form method="POST" enctype="multipart/form-data" action="/batch/upload">
+	<p>文件1：<input type="file" name="file" /></p> ------------------name为file
+	<p>文件2：<input type="file" name="file" /></p> ------------------name为file
+	<p>文件3：<input type="file" name="file" /></p> ------------------name为file
+	<p><input type="submit" value="上传" /></p>
+</form>
+
+后端：
+String handleFileUpload(HttpServletRequest request){
+	List<MultipartFile> files = ((MultipartHttpServletRequest)request).getFiles("file");
+	MultipartFile file = null;
+	BufferedOutputStream stream = null;
+	for (inti =0; i< files.size(); ++i) {
+		循环遍历、判断
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+

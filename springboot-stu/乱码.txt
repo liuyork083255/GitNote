@@ -1,0 +1,25 @@
+首先知道，springboot里面本身默认就是utf-8  
+是不会乱码的，
+
+但是如果使用maven-plugin启动的话就会乱码，（用这个插件是因为方便热部署）
+这个时候就要在这个插件下面加入
+<configuration>
+          <jvmArguments>-Dfile.encoding=UTF-8</jvmArguments>
+</configuration>
+
+
+完整就是
+<groupId>org.springframework.boot</groupId>
+<artifactId>spring-boot-maven-plugin</artifactId>
+<configuration>
+        <jvmArguments>-Dfile.encoding=UTF-8</jvmArguments>
+</configuration>
+
+这样就不会乱码了
+
+
+
+
+
+
+
