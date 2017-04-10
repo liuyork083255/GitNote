@@ -1,0 +1,6 @@
+哇    贼简单！！！
+
+首先在mybatis类上加上 @EnableTransactionManagement 注解 开启注解功能
+然后是在要使用事务的方法上面加上 @Transactional 注解即可
+
+两步搞定   贼简单！！！
