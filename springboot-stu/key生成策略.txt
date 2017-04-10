@@ -1,0 +1,45 @@
+对于使用 @Cacheable 注解的方法，每个缓存的 key 生成策略默认使用的是参数名+参数值，比如以下方法：
+
+	@Cacheable("users")  
+	public User findByUsername(String username) 
+这个方法的缓存将保存于 key 为 users~keys 的缓存下，对于 username 取值为 "赵德芳" 的缓存，key 为 "username-赵德芳"。
+一般情况下没啥问题，二般情况如方法 key 取值相等然后参数名也一样的时候就出问题了，如：
+
+@Cacheable("users")  
+public Integer getLoginCountByUsername(String username)  
+
+这个方法的缓存也将保存于 key 为 users~keys 的缓存下。
+对于 username 取值为 "赵德芳" 的缓存，key 也为 "username-赵德芳"，将另外一个方法的缓存覆盖掉。
+
+解决办法是使用自定义缓存策略，对于同一业务(同一业务逻辑处理的方法，
+哪怕是集群/分布式系统)，生成的 key 始终一致，对于不同业务则不一致：
+
+@Bean  
+public KeyGenerator customKeyGenerator() {  
+    return new KeyGenerator() {  
+        @Override  
+        public Object generate(Object o, Method method, Object... objects) {  
+            StringBuilder sb = new StringBuilder();  
+            sb.append(o.getClass().getName());  
+            sb.append(method.getName());  
+            for (Object obj : objects) {  
+                sb.append(obj.toString());  
+            }  
+            return sb.toString();  
+        }  
+    };  
+} 
+
+于是上述两个方法，对于 username 取值为 "赵德芳" 的缓存，
+虽然都还是存放在 key 为 users~keys 的缓存下，但由于 key 分别为 "类名-findByUsername-username-赵德芳"
+ 和 "类名-getLoginCountByUsername-username-赵德芳"，所以也不会有问题。
+这对于集群系统、分布式系统之间共享缓存很重要，真正实现了分布式缓存。
+
+
+
+
+
+
+
+
+

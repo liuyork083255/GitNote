@@ -1,0 +1,17 @@
+目前貌似springboot中可以有多个缓存共存，
+因为这个注解@Cacheable(cacheManager = "concurrentMapCacheManager")可以使用cacheManager属性，指定使用哪一个cacheManager
+但是目前还没有经过自己的测试
+
+但是如果实现了多个缓存，但是在一个方法上的@Cacheable 没有注明使用哪一个cacheManager，那么会注入一个cacheManager，具体
+	是哪一个也不清楚，测试了一下，实现了默认的和redis的，那么会存入redis缓存，而不会存入默认的缓存。
+
+
+
+
+
+
+
+
+
+
+
