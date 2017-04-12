@@ -1,0 +1,37 @@
+公司项目使用的都是facade+service+dao模式开发，也不晓得好处在哪里，今天花了点时间看看感觉不错
+
+首先是自己的体会，在毕设系统中，自己采用controller+service+dao模式，但是随着需求扩展，controller层的
+代码也不短增加。
+尤其是这种需求：
+	一个功能复杂，完成这个功能可能要用到多个以前写好的controller联合使用，也就是调用别的controller，
+	这样过后，就可能出现一个controller里面可能会出现很多逻辑代码，本来是属于service的，但是service层不能
+	调用controller层，所以只能让一个contrller层调用别的controller层；如果这样的需求过多，就会导致一个controller
+	代码量增加，不便于维护，同时controller层间的耦合性增加了
+	
+其实我们想让controller层每一个方法代码尽可能少，业务逻辑交个service，但是总是会遇到一些需求，里面的某一个部门包含
+了一个完整的另一个controller的功能，而且在service不允许调用controller层，这就是导致问题没有个好的解决，就引出了在
+controller层也采用接口+实现类的方式来设计，而这种设计方式就是facade设计模式
+
+更为形象的形容可以参考链接：http://www.tuicool.com/articles/EvAnUvR
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
