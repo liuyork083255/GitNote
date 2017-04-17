@@ -1,0 +1,84 @@
+参考链接：http://www.cnblogs.com/Sinte-Beuve/p/5758971.html
+
+现在主流的log日志采用的是log4j 和 logback，后者比前者性能上据说要好一点
+
+而slf4j则是一套接口，实现类可以采用上面的两个任何一个，但是据说只能有一个实现类
+
+现在基本都是采用slf4j+log4j 或者是 slf4j+logback，比较少单独使用独立的log4j 和 logback
+
+
+
+slf4j绑定log4j的用法：
+<dependency>
+    <groupId>org.slf4j</groupId>
+    <artifactId>slf4j-log4j12</artifactId>
+    <version>1.7.21</version>
+</dependency>
+此时会自动添加三个依赖jar包
+
+log4j的正常运行需要配置文件，配置文件类型：log4j配置文件可以是log4j.xml也可以是log4j.properties。需要为其配置root、appender、layout等信息。
+配置的时候：
+	1 必须配置root logger和一个appender。
+	2 日志输出级别，由高到低为
+
+=================================================================================
+
+slf4j绑定logback的用法：
+
+<dependency>
+    <groupId>ch.qos.logback</groupId>
+    <artifactId>logback-classic</artifactId>
+    <version>1.1.7</version>
+</dependency>
+网上教程添加了很多，其实只要添加这一个，其他的依赖jar都会被下载下来。
+
+
+
+
+这里给出的是公司的logback.xml配置：
+
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration debug="true"> <!--scan="true" scanPeriod="30 seconds"-->
+    <logger name = "org.redisson" level="INFO"/>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">      <!--这一段表示是将日志输出到控制台-->
+        <encoder>
+            <pattern>[LEVEL: %-5level][TIME: %d{yyyy-MM-dd HH:mm:ss}][THREAD: %thread] -%msg%n</pattern>
+        </encoder>
+    </appender>
+
+
+    <!-- 按日期区分的滚动日志-->
+    <appender name="APP" class="ch.qos.logback.core.rolling.RollingFileAppender">       <!--这一段表示是将日志输出到指定目录下-->
+        <append>true</append>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">       <!--这里是配置按天回滚-->
+            <fileNamePattern>./logs/app.%d{yyyy-MM-dd}.log</fileNamePattern>      <!--这里是日志文件配置路径-->
+        </rollingPolicy>
+        <encoder>
+            <pattern>[LEVEL: %-5level][TIME: %d{yyyy-MM-dd HH:mm:ss}][THREAD: %thread] -%msg%n</pattern>
+        </encoder>
+        <!--只输出error级别日志-->
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">   <!--这个是过滤器，从下面配置来看，只有INFO级别的日志才会被打印-->
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <!-- 异步输出 -->
+    <appender name ="ASYNC" class= "ch.qos.logback.classic.AsyncAppender">
+        <!-- 不丢失日志.默认的,如果队列的80%已满,则会丢弃TRACT、DEBUG、INFO级别的日志 -->
+        <discardingThreshold >0</discardingThreshold>
+        <!-- 更改默认的队列的深度,该值会影响性能.默认值为256 -->
+        <queueSize>10000</queueSize>
+        <!-- 添加附加的appender,最多只能添加一个 -->
+        <appender-ref ref ="APP"/>             <!--异步输出也要依赖一个输出的appender，所这里添加了上面配置好的 APP-->
+    </appender>
+
+    <root level="INFO" additivity="false">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref ="ASYNC"/>
+    </root>
+
+</configuration>
+
