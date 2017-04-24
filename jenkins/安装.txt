@@ -1,0 +1,12 @@
+参考链接：http://blog.csdn.net/ronnyjiang/article/details/51208009
+
+jenkins依赖java，所以必须安装jdk 据说至少1.7版本
+
+然后下载jenkins   http://mirrors.jenkins-ci.org/war-stable/   选择最新的吧  是一个war包
+
+下载好了，用java命令启动就阔以啦（java -jar jenkins.war），默认端口是8080，然后直接访问localhost:8080搞定
+
+
+
+
+

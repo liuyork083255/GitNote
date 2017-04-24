@@ -1,0 +1,2 @@
+较为系统的资料：
+http://www.linuxdaxue.com/influxdb-basic-operation.html

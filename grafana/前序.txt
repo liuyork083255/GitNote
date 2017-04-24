@@ -1,0 +1,13 @@
+测试服务器 
+ip：172.16.18.88
+port：3000
+
+user ： bab
+password ：123456
+
+
+在grafana添加数据库  
+用到的
+url的端口是8086
+user：quote
+password：123456

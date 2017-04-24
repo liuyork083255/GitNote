@@ -1,0 +1,11 @@
+两台服务器上其实都是安装好了   
+/etc/init.d/influxdb 该目录下就有influxdb启动命令
+
+./influxdb start启动  
+./influxdb stop 关闭
+
+因为influxdb自带web管理界面
+启动后就可以通过浏览器访问了    http://IP:8083  就可以进入web管理界面
+
+
+

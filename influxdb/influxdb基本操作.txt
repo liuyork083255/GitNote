@@ -1,0 +1,29 @@
+Êı¾İ¿â²Ù×÷£º
+show databases
+
+create database test
+
+drop database test
+
+use test
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

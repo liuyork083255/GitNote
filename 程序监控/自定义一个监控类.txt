@@ -1,0 +1,75 @@
+
+首先了解 MBean是一个被管理的规范接口或者类，
+类型有四种，Standard Mbean        Dynamic Mbean        Model MBean        Open MBean 
+
+一般我们都是使用第一种 Standard Mbean
+	Standard Mbean是最简单的MBean，他能管理的资源必须定义在接口中，
+	然后MBean必须实现这个接口，命名必须遵守一定的规范。
+
+	必须规范：
+		MBean interface：
+			1、名字必须以MBean结尾
+			2、必须与签名暴漏属性和操作      -----也就是提供get/set
+		MBean implement
+			1、必须有个名字和接口中"MBean"的前缀相同
+			2、实现接口中的方法
+
+	注意：接口里面定义的的属性和方法才是被检测的信息，如果
+		在实现类里面添加很多信息其实都是没有被检测到的。
+
+
+然后了解 MBean Sever 类
+	管理MBean的一个java类，需要向MBean Server中注册一个MBean之后，这个MBean才会具有管理功能，
+	MBeanServer还提供了查询和注解监听器的功能，不同的JMX实现中MBean Server实现也不同。
+
+
+如何编写一个简单的Standard MBean？
+
+1、编写MBean的接口：TestMBean.java
+定义了属性的get和set方法以及一个操作方法
+
+public interface TestMBean {
+    public void printHelloWorld();
+    public String getName();
+    public void setName(String name);
+}
+
+2、写一个类实现刚才的MBean接口Test.java
+
+public class Test implements TestMBean {
+    private String name;
+    public void printHelloWorld() {
+        System.out.println(name+",welcome to this world.");
+    }
+    public String getName() {
+        return name;
+    }
+    public void setName(String name) {
+        this.name = name;
+    }
+}
+
+3、编写一个main函数（将MBean注册到MBeanServer中）Main.java
+
+
+import java.lang.management.ManagementFactory;
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
+public class Main {
+    public static void main(String[] args) throws Exception{
+        MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+        ObjectName name = new ObjectName("agent:name=test");
+        Test testMBean = new Test();
+        mBeanServer.registerMBean(testMBean, name);
+        Thread.sleep(5000000);
+    }
+}
+4、通过JConsole来链接java进程，获取agent信息，通过MBeanServer来操作MBean
+
+
+
+
+
+
+
+

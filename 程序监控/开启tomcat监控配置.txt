@@ -1,0 +1,23 @@
+环境linux
+
+首先知道，要监控tomcat则要开启tomcat的相关配置。
+找到tomcat的安装路径的bin目录下的 catalina.sh文件，然后尽量用vi编辑模式来修改文件，
+因为有的时候使用xftp开启某些文件看似没有乱码，但实则已经乱码了
+
+找到# ----- Execute The Requested Command --------------------------------这一句话
+然后在它的前面加上下面的配置信息即可
+
+
+CATALINA_OPTS="$CATALINA_OPTS
+-Dcom.sun.management.jmxremote
+-Djava.rmi.server.hostname=172.16.66.82         ---------这个是指tomcat所在的服务器 
+-Dcom.sun.management.jmxremote.port=8999        ---------这个是指监控的端口
+-Dcom.sun.management.jmxremote.ssl=false        
+-Dcom.sun.management.jmxremote.authenticate=false"        -----------这是指不用安全校验
+
+
+
+
+然后找到jconsole.exe文件，采用远程登录，输入上面的配置好的 <ip>:<port>即可
+
+

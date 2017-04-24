@@ -1,0 +1,24 @@
+参考链接：http://blog.csdn.net/ty_0930/article/details/52180470
+
+
+
+
+1 用启动命令 bin/logstash -f ./config/*启动后，发现不能同时启动
+
+2 用启动命令bin/logstash -f ./config/启动后，发现能够启动多个配置文件
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,17 @@
+参考链接 ：http://blog.csdn.net/yangzhenzhen/article/details/8512292
+
+
+其实很简单，只需要在slave节点的配置文件中添加 slaveof host port 即可
+
+
+注意：slave节点默认是只读的，不可写入，程序测试测试set就会报错
+
+
+
+
+
+
+
+
+
+

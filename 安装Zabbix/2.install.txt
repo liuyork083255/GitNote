@@ -1,0 +1,193 @@
+1、关闭防火墙、selinux
+
+setenforce 0
+sed -i '/SELINUX/s/enforcing/disabled/' /etc/selinux/config
+service iptables stop
+chkconfig iptables off
+
+
+
+2基础依赖环境配置
+2.1 Apache
+
+Zabbix官方文档要求Apache的版本要在1.3.12之后
+yum install httpd -y
+
+启动httpd服务，并设置为开机自动启动
+service httpd start
+chkconfig httpd on
+
+2.2 PHP
+PHP的版本要求在5.4以上，但Linux 6.x系统自带repo中的PHP版本是5.3.3 不符合Zabbix官方文档的要求，需要使用Remi repo来安装更高版本的PHP
+
+
+
+最终版：
+rpm -ivh http://repo.webtatic.com/yum/el6/latest.rpm
+yum install php56w php56w-gd php56w-mysql php56w-bcmath php56w-mbstring php56w-xml php56w-ldap
+vim /etc/php.ini
+date.timezone = Asia/Shanghai
+post_max_size = 32M
+max_execution_time = 300
+max_input_time = 300
+always_populate_raw_post_data = -1
+
+
+根据官方文档的要求，需要在服务器中安装一下软件支持
+
+yum -y install wget vim tree gcc gcc-c++ autoconf net-snmp-devel curl-devel
+
+yum install OpenIPMI OpenIPMI-devel libssh2 libssh2-devel fping libcurl libxml2 libxml2-devel net-snmp 
+
+
+MySQL
+这里已经事先安装好了
+
+工具安装
+
+
+yum install mysql-community-devel.x86_64
+
+
+
+修改配置参数：
+1.4 配置PHP参数
+zabbix的运行需要特定的php参数支持，修改如下
+
+sed -i "s@;date.timezone =@date.timezone = Asia/Shanghai@g" /etc/php.ini
+
+sed -i "s@max_execution_time = 30@max_execution_time = 300@g" /etc/php.ini
+
+sed -i "s@post_max_size = 8M@post_max_size = 32M@g" /etc/php.ini
+
+sed -i "s@max_input_time = 60@max_input_time = 300@g" /etc/php.ini
+
+sed -i "s@memory_limit = 128M@memory_limit = 128M@g" /etc/php.ini
+
+sed -i "s@;mbstring.func_overload = 0@ambstring.func_overload = 2@g" /etc/php.ini
+
+always_populate_raw_post_data
+
+执行详情如下：
+
+
+[root@app2 ~]# sed -i "s@;date.timezone =@date.timezone = Asia/Shanghai@g" /etc/php.ini
+[root@app2 ~]# sed -i "s@max_execution_time = 30@max_execution_time = 300@g" /etc/php.ini
+[root@app2 ~]# sed -i "s@post_max_size = 8M@post_max_size = 32M@g" /etc/php.ini
+[root@app2 ~]# sed -i "s@max_input_time = 60@max_input_time = 300@g" /etc/php.ini
+[root@app2 ~]# sed -i "s@memory_limit = 128M@memory_limit = 128M@g" /etc/php.ini
+[root@app2 ~]# sed -i "s@;mbstring.func_overload = 0@ambstring.func_overload = 2@g" /etc/php.ini
+
+
+
+
+修改httpd的FQDN错误，重启httpd服务
+ 
+echo "ServerName localhost:80" >>/etc/httpd/conf/httpd.conf
+/etc/init.d/httpd restart
+
+
+
+3 zabbix安装部分
+Zabbix 3.0的安装参考了官方文档中源码编译安装的方式，软件包的方式比较简单，大家可以参考官方文档自行试验，时间关系，这里暂不介绍rpm包的安装方式，后续有时间会补充提供这种安装方式的说明
+
+tar -zxvf tar -xvf zabbix-3.0.4.tar.gz 
+
+
+a164b27ef80221429fc9a39eab0b7b9c
+先验证下md5
+
+
+创建用户及组
+
+groupadd -g 3001 zabbix
+useradd -g zabbix -u 3001 -s /sbin/nologin zabbix
+
+编译安装：
+
+
+
+执行:
+./configure --prefix=/usr/local/zabbix --enable-server --enable-agent --with-mysql --enable-ipv6 --with-net-snmp --with-libcurl --with-libxml2 
+ make &&  make install
+其他组件安装参考：
+
+
+
+
+创建Zabbix数据库
+
+
+
+目标库上执行：
+mysql -uroot -p'密码' -e "create database zabbix default charset utf8;"
+mysql -uroot -p'密码' -e "grant all on zabbix.* to zabbix@localhost identified by '123456';"
+
+
+
+***************************************
+mkdir /var/log/zabbix
+chown zabbix.zabbix /var/log/zabbix
+ln -s /usr/local/zabbix/etc/ /etc/zabbix
+ln -s /usr/local/zabbix/bin/* /usr/bin/
+ln -s /usr/local/zabbix/sbin/* /usr/sbin/ 
+安装目录：
+
+cp misc/init.d/fedora/core/zabbix_* /etc/init.d/
+chmod 755 /etc/init.d/zabbix_*
+
+*****************************************************************888
+
+修改配置：
+修改/etc/init.d目录下的zabbix_server和zabbix_agentd启动文件
+sed -i "s@BASEDIR=/usr/local@BASEDIR=/usr/local/zabbix@g" /etc/init.d/zabbix_server
+sed -i "s@BASEDIR=/usr/local@BASEDIR=/usr/local/zabbix@g" /etc/init.d/zabbix_agentd
+
+
+
+*********************************************************
+1.6.5
+修改/etc/zabbix/zabbix_server.conf
+sed -i "s@DBUser=root@DBUser=zabbix@g" /etc/zabbix/zabbix_server.conf
+
+sed -i "s@# DBPassword=@DBPassword=密码@g" /etc/zabbix/zabbix_server.conf
+
+sed -i "s@# DBSocket=/tmp/mysql.sock@DBSocket=/tmp/mysql.sock@g" /etc/zabbix/zabbix_server.conf
+
+
+
+
+
+*************************************************************
+
+1.6.6
+修改/etc/zabbix/zabbix_agentd.conf，这里的IP地址写的是zabbix_server的IP地址
+
+sed -i "s@Server=127.0.0.1@Server=127.0.0.1,19.168.1.1@g" /etc/zabbix/zabbix_agentd.conf
+sed -i "s@ServerActive=127.0.0.1@ServerActive=19.168.1.1:10051@g" /etc/zabbix/zabbix_agentd.conf
+sed -i "s@tmp/zabbix_agentd.log@var/log/zabbix/zabbix_agentd.log@g" /etc/zabbix/zabbix_agentd.conf
+sed -i "s@^# UnsafeUserParameters=0@UnsafeUserParameters=1\n@g" /etc/zabbix/zabbix_agentd.conf
+ 
+
+
+
+
+
+1.6.7
+复制zabbix站点的文件到/var/www/html目录下
+cp -r frontends/php/ /var/www/html/zabbix/
+chown -R apache.apache /var/www/html/zabbix/
+ 
+chkconfig zabbix_server on
+chkconfig zabbix_agentd on
+service zabbix_server start
+
+service zabbix_agentd start
+
+
+图形界面的使用,请参照官方文档:https://www.zabbix.com/documentation/3.2/manual/installation/install
+
+
+客户端安装:
+参照
+http://tecadmin.net/install-zabbix-agent-on-centos-rhel/

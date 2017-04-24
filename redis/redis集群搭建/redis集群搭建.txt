@@ -1,0 +1,156 @@
+Redis集群搭建与简单使用
+
+介绍安装环境与版本
+
+用两台虚拟机模拟6个节点，一台机器3个节点，创建出3 master、3 salve 环境。
+
+redis 采用 redis-3.2.4 版本。
+
+两台虚拟机都是 CentOS ，一台 CentOS6.5 （IP:192.168.31.245），一台 CentOS7（IP:192.168.31.210） 。
+
+安装过程
+
+1. 下载并解压
+
+cd /root/software
+wget http://download.redis.io/releases/redis-3.2.4.tar.gz     --------这个版本跟后面的gem install redis是两码事
+tar -zxvf redis-3.2.4.tar.gz　
+2. 编译安装
+
+cd redis-3.2.4
+make && make install
+3. 将 redis-trib.rb 复制到 /usr/local/bin 目录下         ----------这个步骤是将该命令设为全局可用
+								也可以将别的命令复制到这个目录下
+
+cd src
+cp redis-trib.rb /usr/local/bin/　　
+4. 创建 Redis 节点
+
+首先在 192.168.31.245 机器上 /root/software/redis-3.2.4 目录下创建 redis_cluster 目录；
+
+mkdir redis_cluster　　
+在 redis_cluster 目录下，创建名为7000、7001、7002的目录，并将 redis.conf 拷贝到这三个目录中
+
+mkdir 7000 7001 7002<br>cp redis.conf redis_cluster/7000
+cp redis.conf redis_cluster/7001
+cp redis.conf redis_cluster/7002　　
+分别修改这三个配置文件，修改如下内容
+
+复制代码
+port  7000                                        //端口7000,7002,7003        
+bind 本机ip                                       //默认ip为127.0.0.1 需要改为其他节点机器可访问的ip 否则创建集群时无法访问对应的端口，无法创建集群
+daemonize    yes                               //redis后台运行
+pidfile  /var/run/redis_7000.pid          //pidfile文件对应7000,7001,7002
+cluster-enabled  yes                           //开启集群  把注释#去掉
+cluster-config-file  nodes_7000.conf   //集群的配置  配置文件首次启动自动生成 7000,7001,7002
+cluster-node-timeout  15000                //请求超时  默认15秒，可自行设置
+appendonly  yes                           //aof日志开启  有需要就开启，它会每次写操作都记录一条日志　
+复制代码
+接着在另外一台机器上（192.168.31.210），的操作重复以上三步，
+	只是把目录改为7003、7004、7005，对应的配置文件也按照这个规则修改即可
+5. 启动各个节点
+
+复制代码
+第一台机器上执行
+redis-server redis_cluster/7000/redis.conf
+redis-server redis_cluster/7001/redis.conf
+redis-server redis_cluster/7002/redis.conf
+ 
+另外一台机器上执行
+redis-server redis_cluster/7003/redis.conf
+redis-server redis_cluster/7004/redis.conf
+redis-server redis_cluster/7005/redis.conf 
+复制代码
+6. 检查 redis 启动情况
+
+复制代码
+##一台机器<br>ps -ef | grep redis
+root      61020      1  0 02:14 ?        00:00:01 redis-server 127.0.0.1:7000 [cluster]    
+root      61024      1  0 02:14 ?        00:00:01 redis-server 127.0.0.1:7001 [cluster]    
+root      61029      1  0 02:14 ?        00:00:01 redis-server 127.0.0.1:7002 [cluster]    
+ 
+netstat -tnlp | grep redis
+tcp        0      0 127.0.0.1:17000             0.0.0.0:*                   LISTEN      61020/redis-server 
+tcp        0      0 127.0.0.1:17001             0.0.0.0:*                   LISTEN      61024/redis-server 
+tcp        0      0 127.0.0.1:17002             0.0.0.0:*                   LISTEN      61029/redis-server 
+tcp        0      0 127.0.0.1:7000              0.0.0.0:*                   LISTEN      61020/redis-server 
+tcp        0      0 127.0.0.1:7001              0.0.0.0:*                   LISTEN      61024/redis-server 
+tcp        0      0 127.0.0.1:7002              0.0.0.0:*                   LISTEN      61029/redis-server
+1
+
+    
+##另外一台机器
+ps -ef | grep redis
+root       9957      1  0 02:32 ?        00:00:01 redis-server 127.0.0.1:7003 [cluster]
+root       9964      1  0 02:32 ?        00:00:01 redis-server 127.0.0.1:7004 [cluster]
+root       9971      1  0 02:32 ?        00:00:01 redis-server 127.0.0.1:7005 [cluster]
+root      10065   4744  0 02:38 pts/0    00:00:00 grep --color=auto redis
+netstat -tlnp | grep redis
+tcp        0      0 127.0.0.1:17003         0.0.0.0:*               LISTEN      9957/redis-server 1
+tcp        0      0 127.0.0.1:17004         0.0.0.0:*               LISTEN      9964/redis-server 1
+tcp        0      0 127.0.0.1:17005         0.0.0.0:*               LISTEN      9971/redis-server 1
+tcp        0      0 127.0.0.1:7003          0.0.0.0:*               LISTEN      9957/redis-server 1
+tcp        0      0 127.0.0.1:7004          0.0.0.0:*               LISTEN      9964/redis-server 1
+tcp        0      0 127.0.0.1:7005          0.0.0.0:*               LISTEN      9971/redis-server 1 
+复制代码
+7.创建集群
+
+Redis 官方提供了 redis-trib.rb 这个工具，就在解压目录的 src 目录中，第三步中已将它复制到 /usr/local/bin 目录中，
+可以直接在命令行中使用了。使用下面这个命令即可完成安装。
+
+redis-trib.rb  create  --replicas  1  192.168.31.245:7000 192.168.31.245:7001  192.168.31.245:7002 192.168.31.210:7003  192.168.31.210:7004  192.168.31.210:7005
+其中，前三个 ip:port 为第一台机器的节点，剩下三个为第二台机器。
+
+等等，出错了。这个工具是用 ruby 实现的，所以需要安装 ruby。安装命令如下：
+
+yum -y install ruby ruby-devel rubygems rpm-build          -------因为后面要使用gem，而gem是ruby写的
+gem install redis                                      ----------这一句很重要，这个安装是redis和集群管理接口
+			默认安装是会下载最新的，但是会报错，需要使用redis 3.0.0版本
+
+		gem list           			  ------------查看redis版本
+		gem uninstall redis --version 3.3.2       --------如果已经安装了最新的，可以卸载
+		gem install redis --version 3.0.0         --------安装执行版本
+		gem list       			          ------------查看redis接口版本是否安装好
+
+
+
+
+之后再运行 redis-trib.rb 命令，会出现如下提示：
+
+
+
+输入 yes 即可，然后出现如下内容，说明安装成功。
+
+　　
+
+8. 集群验证
+
+在第一台机器上连接集群的7002端口的节点，在另外一台连接7005节点，连接方式为 redis-cli -h 192.168.31.245 -c -p 7002  ,
+		加参数 -C 可连接到集群，因为上面 redis.conf 将 bind 改为了ip地址，所以 -h 参数不可以省略。
+
+在7005节点执行命令  set hello world ，执行结果如下：
+
+ 
+
+然后在另外一台7002端口，查看 key 为 hello 的内容， get hello  ，执行结果如下：
+
+
+
+说明集群运作正常。
+
+
+
+
+
+参考文献：
+http://www.cnblogs.com/wuxl360/p/5920330.html
+http://bbs.csdn.net/topics/392055578?locationNum=10&fps=1
+
+还要存入一个key后，在另一个节点测试不要用keys *来获取，这样是空的，要用get命令来获取，因为内部是使用的类似Hash寻址的
+
+
+
+
+
+
+

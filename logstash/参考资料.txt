@@ -1,0 +1,7 @@
+logstash快速入门：	http://www.2cto.com/os/201411/352015.html
+
+关于logstash较为详细的介绍：	http://udn.yyuap.com/doc/logstash-best-practice-cn/get_start/introduction.html
+
+
+
+

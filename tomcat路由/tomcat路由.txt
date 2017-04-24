@@ -1,0 +1,68 @@
+
+1 设置默认的项目路径 
+	在server.xml 里找到host，里面添加 
+	<Context docBase="testURL/dist" path="/" reloadable="true" source="org.eclipse.jst.jee.server:testURL"/>
+
+
+2 设置默认首页
+	在web.xml里面添加
+
+		<welcome-file-list>
+        		<welcome-file>index.html</welcome-file>
+        		<welcome-file>index.htm</welcome-file>
+        		<welcome-file>index.jsp</welcome-file>
+        		<welcome-file>index1.html</welcome-file>
+    		</welcome-file-list>
+
+
+
+3 静态资源：   
+    <servlet>
+        <servlet-name>default</servlet-name>
+        <servlet-class>org.apache.catalina.servlets.DefaultServlet</servlet-class>
+        <init-param>
+            <param-name>debug</param-name>
+            <param-value>0</param-value>
+        </init-param>
+        <init-param>
+            <param-name>listings</param-name>
+            <param-value>false</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+
+			这里给出什么类型，访问什么类型的静态资源就不会报404
+    <servlet-mapping>
+	    <servlet-name>default</servlet-name>  
+	    <url-pattern>*.jpg</url-pattern>
+	    <url-pattern>*.js</url-pattern>
+	    <url-pattern>*.css</url-pattern>
+	    <url-pattern>*.png</url-pattern> 
+	    <url-pattern>*.gif</url-pattern>            
+    </servlet-mapping>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

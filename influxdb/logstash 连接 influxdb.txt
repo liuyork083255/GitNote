@@ -1,0 +1,10 @@
+
+注意如果要连接influxdb数据库，那么logstash就要写入influxdb output插件
+步骤：
+
+先进入logstash的bin目录
+
+1先查看有没有这个插件 ./logstash-plugin list （需要等一下）
+2 如果有自然最好，直接连接即可
+  如果没有就要自己下载安装一个  ./logstash-plugin install logstash-output-influxdb   
+	（这个安装有点慢，千万不要中途退出，不然连logstash都会启动都会报错）

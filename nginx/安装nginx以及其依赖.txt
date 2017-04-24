@@ -1,0 +1,39 @@
+http://inotgaoshou.iteye.com/blog/962946
+
+
+
+
+
+Java代码  收藏代码
+./configure --prefix=/data/services/nginx --with-http_realip_module --with-http_sub_module --with-http_flv_module --with-http_dav_module --with-http_gzip_static_module --with-http_stub_status_module --with-http_addition_module --with-pcre=/data/services/pcre-8.10 --with-openssl=/data/services/openssl-1.0.0a --with-http_ssl_module --with-zlib=/data/services/zlib-1.2.5  
+ 
+ 
+一般编译nginx时，都要先安装pcre、zlib等外部支持程序，然后编译安装nginx时指定这些外部支持程序的位置，这样nginx在每次启动的时候，就会去动态加载这些东西了。
+下面介绍的是另一种方式，即将这些程序编译到nginx里面去，这样nginx启动时就不会采用动态加载的方式去load。从古谱中可获知，这种方式会比动态加载有更高的效率。
+需要下载的东西：
+   1. wget http://www.openssl.org/source/openssl-0.9.8l.tar.gz
+   2. wget ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-8.00.tar.bz2
+   3. wget http://www.zlib.net/zlib-1.2.3.tar.bz2
+   4. wget http://nginx.org/download/nginx-0.8.30.tar.gz
+
+把这些玩意都解压缩后，就会有：
+	tar -zxvf abc.tar.gz abc 是文件名
+
+   1. openssl-1.0.0a
+   2. pcre-8.20
+   3. zlib-1.2.5
+   4. nginx-0.8.30
+
+这几个目录，我把它们都放在/data/download/里，按原先的方式，需要进openssl、pcre、zlib目录里去编译安装它们，现在不用了，直接进nginx目录。
+
+   1. cd nginx-0.8.20
+   2. ./configure --prefix=/data/nginx --with-http_realip_module --with-http_sub_module --with-http_flv_module --with-http_dav_module --with-http_gzip_static_module --with-http_stub_status_module --with-http_addition_module --with-pcre=/data/download/pcre-8.2。0 --with-openssl=/data/download/openssl-1.0.0a --with-http_ssl_module --with-zlib=/data/download/zlib-1.2.5
+   3. make
+   4. make install
+
+
+
+
+
+
+

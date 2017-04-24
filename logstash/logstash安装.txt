@@ -1,0 +1,7 @@
+很简单   就是下载tag文件
+wget https://download.elasticsearch.org/logstash/logstash/logstash-1.4.2.tar.gz
+
+然后解压就可以使用了
+
+注意：
+这个程序依赖java ，所以首先是安装好jdk环境，貌似要版本高一点，最好用最新的啦

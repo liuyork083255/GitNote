@@ -1,0 +1,20 @@
+1 将jar包 放到tomcat的lib目录下
+
+2 将jar包 放到当前项目的WEB-INF/lib下
+ 
+3 在WEB-INF下创建urlrewrite.xml
+
+4 然后将filter过滤信息加入web.xml中 （在 <servlet-mapping>前面加入）
+
+5 修改urlrewrite.xml，在urlrewrite节点中添加一条规则，如下
+
+ <rule>
+  <from>/home</from>
+  <to type= "forward" >/index.jsp</to>
+ </rule>
+
+
+
+
+
+

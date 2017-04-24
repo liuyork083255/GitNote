@@ -1,0 +1,419 @@
+系统要求:
+
+
+[root@zabbix ~]# uname -a
+Linux zabbix.sumscope.com 2.6.32-431.el6.x86_64 #1 SMP Fri Nov 22 03:15:09 UTC 2013 x86_64 x86_64 x86_64 GNU/Linux
+[root@zabbix ~]# cat /etc/redhat-release 
+CentOS release 6.5 (Final)
+
+
+
+
+
+一、安装配置MySQL的yum源
+# 安装MySQL的yum源，下面是RHEL6系列的下载地址
+wget http://dev.mysql.com/get/mysql57-community-release-el6-8.noarch.rpm
+
+
+rpm -ivh mysql57-community-release-el6-8.noarch.rpm
+
+
+yum repolist enabled | grep mysql
+
+
+
+
+
+
+
+
+
+
+
+
+
+二、yum安装MySQL5.7
+# 安装MySQL5.7
+yum install mysql-community-server
+
+安装过程如下：
+
+[root@zabbix yum.repos.d]# yum install mysql-community-server
+Loaded plugins: fastestmirror
+Loading mirror speeds from cached hostfile
+ * base: mirrors.yun-idc.com
+ * extras: mirrors.163.com
+ * updates: mirrors.yun-idc.com
+Setting up Install Process
+Resolving Dependencies
+--> Running transaction check
+---> Package mysql-community-server.x86_64 0:5.7.14-1.el6 will be installed
+--> Processing Dependency: mysql-community-common(x86-64) = 5.7.14-1.el6 for package: mysql-community-server-5.7.14-1.el6.x86_64
+--> Processing Dependency: mysql-community-client(x86-64) >= 5.7.9 for package: mysql-community-server-5.7.14-1.el6.x86_64
+--> Processing Dependency: libaio.so.1(LIBAIO_0.4)(64bit) for package: mysql-community-server-5.7.14-1.el6.x86_64
+--> Processing Dependency: libaio.so.1(LIBAIO_0.1)(64bit) for package: mysql-community-server-5.7.14-1.el6.x86_64
+--> Processing Dependency: libnuma.so.1()(64bit) for package: mysql-community-server-5.7.14-1.el6.x86_64
+--> Processing Dependency: libaio.so.1()(64bit) for package: mysql-community-server-5.7.14-1.el6.x86_64
+--> Running transaction check
+---> Package libaio.x86_64 0:0.3.107-10.el6 will be installed
+---> Package mysql-community-client.x86_64 0:5.7.14-1.el6 will be installed
+--> Processing Dependency: mysql-community-libs(x86-64) >= 5.7.9 for package: mysql-community-client-5.7.14-1.el6.x86_64
+---> Package mysql-community-common.x86_64 0:5.7.14-1.el6 will be installed
+---> Package numactl.x86_64 0:2.0.9-2.el6 will be installed
+--> Running transaction check
+---> Package mysql-community-libs.x86_64 0:5.7.14-1.el6 will be obsoleting
+---> Package mysql-libs.x86_64 0:5.1.71-1.el6 will be obsoleted
+--> Processing Dependency: libmysqlclient.so.16()(64bit) for package: 2:postfix-2.6.6-2.2.el6_1.x86_64
+--> Processing Dependency: libmysqlclient.so.16(libmysqlclient_16)(64bit) for package: 2:postfix-2.6.6-2.2.el6_1.x86_64
+--> Running transaction check
+---> Package mysql-community-libs-compat.x86_64 0:5.7.14-1.el6 will be obsoleting
+---> Package postfix.x86_64 2:2.6.6-2.2.el6_1 will be updated
+---> Package postfix.x86_64 2:2.6.6-6.el6_7.1 will be an update
+--> Finished Dependency Resolution
+
+Dependencies Resolved
+
+============================================================================================================================================================================
+ Package                                            Arch                          Version                                    Repository                                Size
+============================================================================================================================================================================
+Installing:
+ mysql-community-libs                               x86_64                        5.7.14-1.el6                               mysql57-community                        2.1 M
+     replacing  mysql-libs.x86_64 5.1.71-1.el6
+ mysql-community-libs-compat                        x86_64                        5.7.14-1.el6                               mysql57-community                        1.6 M
+     replacing  mysql-libs.x86_64 5.1.71-1.el6
+ mysql-community-server                             x86_64                        5.7.14-1.el6                               mysql57-community                        143 M
+Installing for dependencies:
+ libaio                                             x86_64                        0.3.107-10.el6                             base                                      21 k
+ mysql-community-client                             x86_64                        5.7.14-1.el6                               mysql57-community                         22 M
+ mysql-community-common                             x86_64                        5.7.14-1.el6                               mysql57-community                        327 k
+ numactl                                            x86_64                        2.0.9-2.el6                                base                                      74 k
+Updating for dependencies:
+ postfix                                            x86_64                        2:2.6.6-6.el6_7.1                          base                                     2.0 M
+
+Transaction Summary
+============================================================================================================================================================================
+Install       7 Package(s)
+Upgrade       1 Package(s)
+
+Total download size: 172 M
+Is this ok [y/N]: y
+Downloading Packages:
+(1/8): libaio-0.3.107-10.el6.x86_64.rpm                                                                                                              |  21 kB     00:00     
+(2/8): mysql-community-client-5.7.14-1.el6.x86_64.rpm                                                                                                |  22 MB     02:34     
+(3/8): mysql-community-common-5.7.14-1.el6.x86_64.rpm                                                                                                | 327 kB     00:02     
+(4/8): mysql-community-libs-5.7.14-1.el6.x86_64.rpm                                                                                                  | 2.1 MB     00:24     
+(5/8): mysql-community-libs-compat-5.7.14-1.el6.x86_64.rpm                                                                                           | 1.6 MB     00:06     
+(6/8): mysql-community-server-5.7.14-1.el6.x86_64.rpm                                                                                                | 143 MB     10:50     
+(7/8): numactl-2.0.9-2.el6.x86_64.rpm                                                                                                                |  74 kB     00:00     
+(8/8): postfix-2.6.6-6.el6_7.1.x86_64.rpm                                                                                                            | 2.0 MB     00:00     
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Total                                                                                                                                       209 kB/s | 172 MB     14:03     
+warning: rpmts_HdrFromFdno: Header V3 DSA/SHA1 Signature, key ID 5072e1f5: NOKEY
+Retrieving key from file:///etc/pki/rpm-gpg/RPM-GPG-KEY-mysql
+Importing GPG key 0x5072E1F5:
+ Userid : MySQL Release Engineering <mysql-build@oss.oracle.com>
+ Package: mysql57-community-release-el6-8.noarch (installed)
+ From   : /etc/pki/rpm-gpg/RPM-GPG-KEY-mysql
+Is this ok [y/N]: y
+Running rpm_check_debug
+Running Transaction Test
+Transaction Test Succeeded
+Running Transaction
+Warning: RPMDB altered outside of yum.
+  Installing : mysql-community-common-5.7.14-1.el6.x86_64                                                                                                              1/10 
+  Installing : mysql-community-libs-5.7.14-1.el6.x86_64                                                                                                                2/10 
+  Installing : mysql-community-client-5.7.14-1.el6.x86_64                                                                                                              3/10 
+  Installing : mysql-community-libs-compat-5.7.14-1.el6.x86_64                                                                                                         4/10 
+  Installing : libaio-0.3.107-10.el6.x86_64                                                                                                                            5/10 
+  Installing : numactl-2.0.9-2.el6.x86_64                                                                                                                              6/10 
+  Installing : mysql-community-server-5.7.14-1.el6.x86_64                                                                                                              7/10 
+  Updating   : 2:postfix-2.6.6-6.el6_7.1.x86_64                                                                                                                        8/10 
+  Cleanup    : 2:postfix-2.6.6-2.2.el6_1.x86_64                                                                                                                        9/10 
+  Erasing    : mysql-libs-5.1.71-1.el6.x86_64                                                                                                                         10/10 
+  Verifying  : mysql-community-libs-5.7.14-1.el6.x86_64                                                                                                                1/10 
+  Verifying  : 2:postfix-2.6.6-6.el6_7.1.x86_64                                                                                                                        2/10 
+  Verifying  : numactl-2.0.9-2.el6.x86_64                                                                                                                              3/10 
+  Verifying  : mysql-community-common-5.7.14-1.el6.x86_64                                                                                                              4/10 
+  Verifying  : mysql-community-client-5.7.14-1.el6.x86_64                                                                                                              5/10 
+  Verifying  : mysql-community-libs-compat-5.7.14-1.el6.x86_64                                                                                                         6/10 
+  Verifying  : libaio-0.3.107-10.el6.x86_64                                                                                                                            7/10 
+  Verifying  : mysql-community-server-5.7.14-1.el6.x86_64                                                                                                              8/10 
+  Verifying  : 2:postfix-2.6.6-2.2.el6_1.x86_64                                                                                                                        9/10 
+  Verifying  : mysql-libs-5.1.71-1.el6.x86_64                                                                                                                         10/10 
+
+Installed:
+  mysql-community-libs.x86_64 0:5.7.14-1.el6            mysql-community-libs-compat.x86_64 0:5.7.14-1.el6            mysql-community-server.x86_64 0:5.7.14-1.el6           
+
+Dependency Installed:
+  libaio.x86_64 0:0.3.107-10.el6      mysql-community-client.x86_64 0:5.7.14-1.el6      mysql-community-common.x86_64 0:5.7.14-1.el6      numactl.x86_64 0:2.0.9-2.el6     
+
+Dependency Updated:
+  postfix.x86_64 2:2.6.6-6.el6_7.1                                                                                                                                          
+
+Replaced:
+  mysql-libs.x86_64 0:5.1.71-1.el6                                                                                                                                          
+
+Complete!
+[root@zabbix yum.repos.d]# 
+
+
+
+
+三、启动MySQL
+# 禁用selinux
+setenforce 0
+sed -i '/SELINUX/s/enforcing/disabled/' /etc/selinux/config
+
+
+# 启动mysqld，启动之前先修改/etc/my.cnf配置文件，本文用默认的配置。
+[root@zabbix yum.repos.d]# cp /etc/my.cnf /etc/my.cnf.bak
+
+创建数据文件存放目录：
+cd /opt
+[root@zabbix sumscope]# mkdir mydata
+[root@zabbix sumscope]# chown mysql:mysql mydata/
+
+修改配置文件：
+datadir=/opt/mydata
+socket=/opt/mydata/mysql.sock
+
+server-id = 1
+port = 3306
+user = mysql
+character_set_server=utf8mb4
+max_connections = 800
+max_connect_errors = 1000
+log-bin=mysql-bin
+
+
+####################3
+/etc/init.d/mysqld start
+
+查看：
+[root@zabbix sumscope]# ls -l /opt/mydata/
+total 122948
+-rw-r-----. 1 mysql mysql       56 Aug  2 17:09 auto.cnf
+-rw-------. 1 mysql mysql     1679 Aug  2 17:10 ca-key.pem
+-rw-r--r--. 1 mysql mysql     1074 Aug  2 17:10 ca.pem
+-rw-r--r--. 1 mysql mysql     1078 Aug  2 17:10 client-cert.pem
+-rw-------. 1 mysql mysql     1679 Aug  2 17:10 client-key.pem
+-rw-r-----. 1 mysql mysql      359 Aug  2 17:10 ib_buffer_pool
+-rw-r-----. 1 mysql mysql 12582912 Aug  2 17:10 ibdata1
+-rw-r-----. 1 mysql mysql 50331648 Aug  2 17:10 ib_logfile0
+-rw-r-----. 1 mysql mysql 50331648 Aug  2 17:09 ib_logfile1
+-rw-r-----. 1 mysql mysql 12582912 Aug  2 17:10 ibtmp1
+drwxr-x---. 2 mysql mysql     4096 Aug  2 17:09 mysql
+-rw-rw----. 1 root  root         5 Aug  2 17:10 mysqld_safe.pid
+srwxrwxrwx. 1 mysql mysql        0 Aug  2 17:10 mysql.sock
+-rw-------. 1 mysql mysql        5 Aug  2 17:10 mysql.sock.lock
+drwxr-x---. 2 mysql mysql     4096 Aug  2 17:09 performance_schema
+-rw-------. 1 mysql mysql     1675 Aug  2 17:10 private_key.pem
+-rw-r--r--. 1 mysql mysql      451 Aug  2 17:10 public_key.pem
+-rw-r--r--. 1 mysql mysql     1078 Aug  2 17:10 server-cert.pem
+-rw-------. 1 mysql mysql     1679 Aug  2 17:10 server-key.pem
+drwxr-x---. 2 mysql mysql    12288 Aug  2 17:09 sys
+
+
+
+
+
+[root@zabbix sumscope]# grep "temporary password" /var/log/mysqld.log 
+2016-08-02T09:09:57.538518Z 1 [Note] A temporary password is generated for root@localhost: umAhb.h9vk8r
+
+
+
+执行情况如下：
+[root@zabbix sumscope]#  mysql_secure_installation
+
+Securing the MySQL server deployment.
+
+Enter password for user root: 
+Error: Can't connect to local MySQL server through socket '/var/lib/mysql/mysql.sock' (2)
+
+[root@zabbix sumscope]# ln -s /opt/mydata/mysql.sock /var/lib/mysql/mysql.sock
+[root@zabbix sumscope]# ls -l /var/lib/mysql/mysql.sock
+lrwxrwxrwx. 1 root root 27 Aug  2 17:23 /var/lib/mysql/mysql.sock -> /opt/mydata/mysql.sock
+
+
+
+重新执行：密码123456
+          1235
+
+ 执行情况如下：
+[root@zabbix sumscope]# mysql_secure_installation
+
+Securing the MySQL server deployment.
+
+Enter password for user root: 
+
+The existing password for the user account root has expired. Please set a new password.
+
+New password: 
+
+Re-enter new password: 
+ ... Failed! Error: Your password does not satisfy the current policy requirements
+
+New password: 
+
+Re-enter new password: 
+The 'validate_password' plugin is installed on the server.
+The subsequent steps will run with the existing configuration
+of the plugin.
+Using existing password for root.
+
+Estimated strength of the password: 100 
+Change the password for root ? ((Press y|Y for Yes, any other key for No) : y
+
+New password: 
+
+Re-enter new password: 
+
+Estimated strength of the password: 100 
+Do you wish to continue with the password provided?(Press y|Y for Yes, any other key for No) : y
+By default, a MySQL installation has an anonymous user,
+allowing anyone to log into MySQL without having to have
+a user account created for them. This is intended only for
+testing, and to make the installation go a bit smoother.
+You should remove them before moving into a production
+environment.
+
+Remove anonymous users? (Press y|Y for Yes, any other key for No) : y
+Success.
+
+
+Normally, root should only be allowed to connect from
+'localhost'. This ensures that someone cannot guess at
+the root password from the network.
+
+Disallow root login remotely? (Press y|Y for Yes, any other key for No) : y
+Success.
+
+By default, MySQL comes with a database named 'test' that
+anyone can access. This is also intended only for testing,
+and should be removed before moving into a production
+environment.
+
+
+Remove test database and access to it? (Press y|Y for Yes, any other key for No) : y
+ - Dropping test database...
+Success.
+
+ - Removing privileges on test database...
+Success.
+
+Reloading the privilege tables will ensure that all changes
+made so far will take effect immediately.
+
+Reload privilege tables now? (Press y|Y for Yes, any other key for No) : y
+Success.
+
+All done! 
+
+
+
+登录验证：
+[root@zabbix sumscope]# mysql -uroot -p
+Enter password: 
+Welcome to the MySQL monitor.  Commands end with ; or \g.
+Your MySQL connection id is 6
+Server version: 5.7.14 MySQL Community Server (GPL)
+
+Copyright (c) 2000, 2016, Oracle and/or its affiliates. All rights reserved.
+
+Oracle is a registered trademark of Oracle Corporation and/or its
+affiliates. Other names may be trademarks of their respective
+owners.
+
+Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.
+
+mysql> 
+mysql> 
+mysql> 
+mysql> show databases;
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+4 rows in set (0.00 sec)
+
+mysql> desc mysql.user;
++------------------------+-----------------------------------+------+-----+-----------------------+-------+
+| Field                  | Type                              | Null | Key | Default               | Extra |
++------------------------+-----------------------------------+------+-----+-----------------------+-------+
+| Host                   | char(60)                          | NO   | PRI |                       |       |
+| User                   | char(32)                          | NO   | PRI |                       |       |
+| Select_priv            | enum('N','Y')                     | NO   |     | N                     |       |
+| Insert_priv            | enum('N','Y')                     | NO   |     | N                     |       |
+| Update_priv            | enum('N','Y')                     | NO   |     | N                     |       |
+| Delete_priv            | enum('N','Y')                     | NO   |     | N                     |       |
+| Create_priv            | enum('N','Y')                     | NO   |     | N                     |       |
+| Drop_priv              | enum('N','Y')                     | NO   |     | N                     |       |
+| Reload_priv            | enum('N','Y')                     | NO   |     | N                     |       |
+| Shutdown_priv          | enum('N','Y')                     | NO   |     | N                     |       |
+| Process_priv           | enum('N','Y')                     | NO   |     | N                     |       |
+| File_priv              | enum('N','Y')                     | NO   |     | N                     |       |
+| Grant_priv             | enum('N','Y')                     | NO   |     | N                     |       |
+| References_priv        | enum('N','Y')                     | NO   |     | N                     |       |
+| Index_priv             | enum('N','Y')                     | NO   |     | N                     |       |
+| Alter_priv             | enum('N','Y')                     | NO   |     | N                     |       |
+| Show_db_priv           | enum('N','Y')                     | NO   |     | N                     |       |
+| Super_priv             | enum('N','Y')                     | NO   |     | N                     |       |
+| Create_tmp_table_priv  | enum('N','Y')                     | NO   |     | N                     |       |
+| Lock_tables_priv       | enum('N','Y')                     | NO   |     | N                     |       |
+| Execute_priv           | enum('N','Y')                     | NO   |     | N                     |       |
+| Repl_slave_priv        | enum('N','Y')                     | NO   |     | N                     |       |
+| Repl_client_priv       | enum('N','Y')                     | NO   |     | N                     |       |
+| Create_view_priv       | enum('N','Y')                     | NO   |     | N                     |       |
+| Show_view_priv         | enum('N','Y')                     | NO   |     | N                     |       |
+| Create_routine_priv    | enum('N','Y')                     | NO   |     | N                     |       |
+| Alter_routine_priv     | enum('N','Y')                     | NO   |     | N                     |       |
+| Create_user_priv       | enum('N','Y')                     | NO   |     | N                     |       |
+| Event_priv             | enum('N','Y')                     | NO   |     | N                     |       |
+| Trigger_priv           | enum('N','Y')                     | NO   |     | N                     |       |
+| Create_tablespace_priv | enum('N','Y')                     | NO   |     | N                     |       |
+| ssl_type               | enum('','ANY','X509','SPECIFIED') | NO   |     |                       |       |
+| ssl_cipher             | blob                              | NO   |     | NULL                  |       |
+| x509_issuer            | blob                              | NO   |     | NULL                  |       |
+| x509_subject           | blob                              | NO   |     | NULL                  |       |
+| max_questions          | int(11) unsigned                  | NO   |     | 0                     |       |
+| max_updates            | int(11) unsigned                  | NO   |     | 0                     |       |
+| max_connections        | int(11) unsigned                  | NO   |     | 0                     |       |
+| max_user_connections   | int(11) unsigned                  | NO   |     | 0                     |       |
+| plugin                 | char(64)                          | NO   |     | mysql_native_password |       |
+| authentication_string  | text                              | YES  |     | NULL                  |       |
+| password_expired       | enum('N','Y')                     | NO   |     | N                     |       |
+| password_last_changed  | timestamp                         | YES  |     | NULL                  |       |
+| password_lifetime      | smallint(5) unsigned              | YES  |     | NULL                  |       |
+| account_locked         | enum('N','Y')                     | NO   |     | N                     |       |
++------------------------+-----------------------------------+------+-----+-----------------------+-------+
+45 rows in set (0.00 sec)
+
+mysql> select Host,user from mysql.user;
++-----------+-----------+
+| Host      | user      |
++-----------+-----------+
+| localhost | mysql.sys |
+| localhost | root      |
++-----------+-----------+
+2 rows in set (0.00 sec)
+
+mysql> 
+
+
+
+
+
+sh /etc/init.d/mysqld start
+
+
+
+
+
+
+
+
+

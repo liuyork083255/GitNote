@@ -1,0 +1,113 @@
+首先是filter 里面有很多插件，最常见的就是grok，mutate等等
+
+grok：
+
+filter {
+    grok {
+        match => {
+            "message" => "\s+(?<request_time>\d+(?:\.\d+)?)\s+"
+        }
+    }
+}
+
+mutate：
+
+
+filter{
+    mutate{
+     split => ["message","|"]
+        add_field =>   {           -----------add_field则是将字段一key-value形式添加在输出模式中
+            "tmp" => "%{[message][0]}"
+        }
+        add_field =>   {
+            "DeviceProduct" => "%{[message][2]}"
+        }
+    }
+}
+注意：其实这里还可以进一步对tmp进行拆分
+例如：
+filter{
+    mutate{
+     split => ["message","|"]
+        add_field =>   {
+            "tmp" => "%{[message][0]}"
+        }
+        add_field =>   {
+            "DeviceProduct" => "%{[message][2]}"
+        }
+    }
+    mutate{
+     split => ["tmp","|"]               --------------这时候的tmp就是来自第一次拆分的自定义的tmp字段，注意顺序
+        add_field =>   {
+            "tmp" => "%{[message][0]}"
+        }
+        add_field =>   {
+            "DeviceProduct" => "%{[message][2]}"
+        }
+    }
+}
+
+
+mutate 里面还有一个字符转换功能 covert 
+类型转换mutate可以设置的转换类型包括："integer"，"float" 和 "string"
+例如：
+filter { 
+    mutate {
+        convert => ["age", "integer"]		--------------同样这种方式可以连接在新增的字段后面
+    }
+}
+
+字符串处理gsub通过正则表达式替换匹配的值，只对字符串有效，每个替换包括3个元素的数组，
+分别对应字段名，正则匹配表达式，替换的值。
+示例：
+filter { 
+	mutate { 
+		gsub => [ 
+			"filed_name_1", "/" , "_",                ＃将filed_name_1字段中所有"/"转换为"_" 
+			
+			"filed_name_2", "[\\?#-]", "." ] 	# 将filed_name_2字段中所有"\","?","#","-"转换为"." 
+	}
+}
+
+
+mutate的更多操作 可以参考链接：http://blog.csdn.net/cromma/article/details/52919742
+
+
+
+
+
+这里讲解正则：
+自定义正则：
+	语法： (?<filed_name>the pattern here)
+
+grok 的match匹配可以实现多个匹配，
+	match => [ "message", "(?<request_time>\d+(?:\.\d+)?)", "message", "%{SYSLOGBASE} %{DATA:message}"]
+		logstash 会按照这个定义次序依次尝试匹配，到匹配成功为止。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,246 @@
+yum -y install gcc 
+
+wget http://download.redis.io/releases/redis-3.2.2.tar.gz
+
+tar zxf redis-3.2.2.tar.gz
+
+cd redis-3.2.2
+
+make
+
+make install
+
+
+
+
+******************
+mkdir /opt/redis-cluster
+
+[root@node1 redis-cluster]# mkdir {7000,7001,7002}
+
+[root@node1 redis-cluster]# cp /opt/redis/redis.conf /opt/redis-cluster/7000/
+You have new mail in /var/spool/mail/root
+[root@node1 redis-cluster]# cp /opt/redis/redis.conf /opt/redis-cluster/7001/
+[root@node1 redis-cluster]# cp /opt/redis/redis.conf /opt/redis-cluster/7002/
+[root@node1 redis-cluster]# cp 7000/redis.conf 7003/
+[root@node1 redis-cluster]# cp 7000/redis.conf 7004/
+You have new mail in /var/spool/mail/root
+[root@node1 redis-cluster]# cp 7000/redis.conf 7005/
+
+
+
+
+修改如下信息 
+daemonize yes 
+pidfile /var/run/redis-7000.pid 
+port 7000 
+logfile "/var/log/redis-7000.log" 
+注释掉如下信息， 不需要RDB持久化 
+#save 900 1 
+#save 300 10 
+#save 60 10000 
+修改如下信
+appendonly yes 
+appendfilename "appendonly-7000.aof" 
+
+取消如下注释，让Redis在集群模式下运行 
+cluster-enabled yes    启动cluster模式 
+
+cluster-config-file nodes-7000.conf 集群信息文件名，由redis自己维护 
+cluster-node-timeout 15000 15秒中联系不到对方node，即认为对方有故障可能
+
+
+[root@node1 7001]# sed -i "s#7000#70001#g" redis.conf 
+
+
+检查一下：
+[root@node1 7000]# diff redis.conf ../7001/redis.conf 
+84c84
+< port 7000
+---
+> port 7001
+163c163
+< logfile "/var/log/redis-7000.log"
+---
+> logfile "/var/log/redis-7001.log"
+597c597
+< appendfilename "appendonly-7000.aof"
+---
+> appendfilename "appendonly-7001.aof"
+729c729
+< cluster-config-file nodes-7000.conf
+---
+> cluster-config-file nodes-7001.conf
+[root@node1 7000]# diff redis.conf ../7002/redis.conf 
+84c84
+< port 7000
+---
+> port 7002
+163c163
+< logfile "/var/log/redis-7000.log"
+---
+> logfile "/var/log/redis-7002.log"
+597c597
+< appendfilename "appendonly-7000.aof"
+---
+> appendfilename "appendonly-7002.aof"
+729c729
+< cluster-config-file nodes-7000.conf
+---
+> cluster-config-file nodes-7002.conf
+
+########################################3
+
+启动
+
+
+redis-server redis.conf
+
+
+启动成功如下：
+[root@node1 7000]# ps -ef | grep redis
+root     30336     1  0 16:46 ?        00:00:00 redis-server 127.0.0.1:7000 [cluster]
+root     30412     1  0 16:47 ?        00:00:00 redis-server 127.0.0.1:7001 [cluster]
+root     30432     1  0 16:47 ?        00:00:00 redis-server 127.0.0.1:7002 [cluster]
+root     30463     1  0 16:48 ?        00:00:00 redis-server 127.0.0.1:7003 [cluster]
+root     30523     1  0 16:48 ?        00:00:00 redis-server 127.0.0.1:7004 [cluster]
+root     30549     1  0 16:49 ?        00:00:00 redis-server 127.0.0.1:7005 [cluster]
+
+
+
+yum install ruby
+yum install rubygems
+gem install redis
+
+cd /opt/redis/src
+
+
+./redis-trib.rb create --replicas 1 127.0.0.1:7000 127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 127.0.0.1:7004 127.0.0.1:7005
+
+
+
+执行结果如下：（3个节点的配置 redis-trib.rb create --replicas 0 127.0.0.1:6000 127.0.0.1:6001 127.0.0.1:6002）
+
+[root@node1 src]# ./redis-trib.rb create --replicas 1 127.0.0.1:7000 127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 127.0.0.1:7004 127.0.0.1:7005
+>>> Creating cluster
+>>> Performing hash slots allocation on 6 nodes...
+Using 3 masters:
+127.0.0.1:7000
+127.0.0.1:7001
+127.0.0.1:7002
+Adding replica 127.0.0.1:7003 to 127.0.0.1:7000
+Adding replica 127.0.0.1:7004 to 127.0.0.1:7001
+Adding replica 127.0.0.1:7005 to 127.0.0.1:7002
+M: 843e57e75826cc9847486a460837f617212c3e90 127.0.0.1:7000
+   slots:0-5460 (5461 slots) master
+M: 1f6ed3d123490c5bc0ed2d4bcbf1d769827f68e2 127.0.0.1:7001
+   slots:5461-10922 (5462 slots) master
+M: 1537c1e632422ed1c17a987d93d9149834b4c7fc 127.0.0.1:7002
+   slots:10923-16383 (5461 slots) master
+S: 935d5d8f57a6b55111f16c96e977ea88eadd365b 127.0.0.1:7003
+   replicates 843e57e75826cc9847486a460837f617212c3e90
+S: aed88bd18cb015212a8a568cdf9936bea9817838 127.0.0.1:7004
+   replicates 1f6ed3d123490c5bc0ed2d4bcbf1d769827f68e2
+S: 544099c3445ecda264f8db4f7849fe3f39556ab3 127.0.0.1:7005
+   replicates 1537c1e632422ed1c17a987d93d9149834b4c7fc
+Can I set the above configuration? (type 'yes' to accept): yes
+>>> Nodes configuration updated
+>>> Assign a different config epoch to each node
+>>> Sending CLUSTER MEET messages to join the cluster
+Waiting for the cluster to join....
+>>> Performing Cluster Check (using node 127.0.0.1:7000)
+M: 843e57e75826cc9847486a460837f617212c3e90 127.0.0.1:7000
+   slots:0-5460 (5461 slots) master
+M: 1f6ed3d123490c5bc0ed2d4bcbf1d769827f68e2 127.0.0.1:7001
+   slots:5461-10922 (5462 slots) master
+M: 1537c1e632422ed1c17a987d93d9149834b4c7fc 127.0.0.1:7002
+   slots:10923-16383 (5461 slots) master
+M: 935d5d8f57a6b55111f16c96e977ea88eadd365b 127.0.0.1:7003
+   slots: (0 slots) master
+   replicates 843e57e75826cc9847486a460837f617212c3e90
+M: aed88bd18cb015212a8a568cdf9936bea9817838 127.0.0.1:7004
+   slots: (0 slots) master
+   replicates 1f6ed3d123490c5bc0ed2d4bcbf1d769827f68e2
+M: 544099c3445ecda264f8db4f7849fe3f39556ab3 127.0.0.1:7005
+   slots: (0 slots) master
+   replicates 1537c1e632422ed1c17a987d93d9149834b4c7fc
+[OK] All nodes agree about slots configuration.
+>>> Check for open slots...
+>>> Check slots coverage...
+[OK] All 16384 slots covered.
+You have new mail in /var/spool/mail/root
+
+
+
+
+[root@node1 src]# redis-cli -p 7000 info Replication
+# Replication
+role:master
+connected_slaves:1
+slave0:ip=127.0.0.1,port=7003,state=online,offset=791,lag=1
+master_repl_offset:791
+repl_backlog_active:1
+repl_backlog_size:1048576
+repl_backlog_first_byte_offset:2
+repl_backlog_histlen:790
+
+
+
+redis-cli -p 7003 info Replication
+
+
+
+redis-cli -c -h 127.0.0.1 -p 7000
+SHUTDOWN  7000
+
+[root@node1 7000]# redis-cli -c -h 127.0.0.1 -p 7000
+127.0.0.1:7000> SHUTDOWN
+not connected> 
+not connected> 
+not connected> exit
+You have new mail in /var/spool/mail/root
+[root@node1 7000]# ps -ef | grep redis
+root       631 30205  0 17:16 pts/4    00:00:00 grep redis
+root     30412     1  0 16:47 ?        00:00:01 redis-server 127.0.0.1:7001 [cluster]
+root     30432     1  0 16:47 ?        00:00:01 redis-server 127.0.0.1:7002 [cluster]
+root     30463     1  0 16:48 ?        00:00:01 redis-server 127.0.0.1:7003 [cluster]
+root     30523     1  0 16:48 ?        00:00:01 redis-server 127.0.0.1:7004 [cluster]
+root     30549     1  0 16:49 ?        00:00:01 redis-server 127.0.0.1:7005 [cluster]
+
+查看节点：
+[root@node1 7002]# cat nodes-7002.conf 
+1537c1e632422ed1c17a987d93d9149834b4c7fc 127.0.0.1:7002 myself,master - 0 0 3 connected 10923-16383
+843e57e75826cc9847486a460837f617212c3e90 127.0.0.1:7000 master,fail - 1474622211017 1474622208312 1 disconnected
+544099c3445ecda264f8db4f7849fe3f39556ab3 127.0.0.1:7005 slave 1537c1e632422ed1c17a987d93d9149834b4c7fc 0 1474622289649 6 connected
+935d5d8f57a6b55111f16c96e977ea88eadd365b 127.0.0.1:7003 master - 0 1474622288645 8 connected 0-5460
+aed88bd18cb015212a8a568cdf9936bea9817838 127.0.0.1:7004 slave 1f6ed3d123490c5bc0ed2d4bcbf1d769827f68e2 0 1474622286636 5 connected
+1f6ed3d123490c5bc0ed2d4bcbf1d769827f68e2 127.0.0.1:7001 master - 0 1474622287641 2 connected 5461-10922
+vars currentEpoch 8 lastVoteEpoch 8
+You have new mail in /var/spool/mail/root
+
+7003 变为master
+
+
+
+启动7000后发现：
+root@node1 7000]# cat nodes-7000.conf 
+843e57e75826cc9847486a460837f617212c3e90 127.0.0.1:7000 myself,slave 935d5d8f57a6b55111f16c96e977ea88eadd365b 0 0 1 connected
+aed88bd18cb015212a8a568cdf9936bea9817838 127.0.0.1:7004 slave 1f6ed3d123490c5bc0ed2d4bcbf1d769827f68e2 0 1474622373129 5 connected
+1f6ed3d123490c5bc0ed2d4bcbf1d769827f68e2 127.0.0.1:7001 master - 0 1474622373129 2 connected 5461-10922
+1537c1e632422ed1c17a987d93d9149834b4c7fc 127.0.0.1:7002 master - 0 1474622373129 3 connected 10923-16383
+935d5d8f57a6b55111f16c96e977ea88eadd365b 127.0.0.1:7003 master - 0 1474622373129 8 connected 0-5460
+544099c3445ecda264f8db4f7849fe3f39556ab3 127.0.0.1:7005 slave 1537c1e632422ed1c17a987d93d9149834b4c7fc 0 1474622373129 6 connected
+vars currentEpoch 8 lastVoteEpoch 0
+[root@node1 7000]# 
+
+
+
+强哥推荐 链接 http://www.cnblogs.com/gomysql/p/4395504.html
+
+
+
+
+
+
+
+

@@ -1,0 +1,67 @@
+1 首先是安装nginx   其依赖有三个 openssl pcre zlib
+
+将相关的 文件下载好（注意目录自己可以修改）
+
+./configure --prefix=/root/nginx1.8 \
+--with-http_realip_module \
+--with-http_sub_module \
+--with-http_flv_module \
+--with-http_dav_module \
+--with-http_gzip_static_module \
+--with-http_stub_status_module \
+--with-http_addition_module \
+--with-http_ssl_module \
+--with-pcre=/root/nginx-rely/pcre-8.38 \
+--with-openssl=/root/nginx-rely/openssl-1.0.0a \
+--with-zlib=/root/nginx-rely/zlib-1.2.8 \
+
+2 然后就是结合redis
+ 2.1 首先是版本问题，由于在安装中出现很多问题，所以版本我采用下面 
+ 2.2 redis 网上是引入了6个模板，其中redis2-*  和  srcache-* 
+	这两个模板下载tar.gz版本的时候出现异常，无法安装成功，甚至是在官网下载也出现该问题
+	最后是在http://www.tuicool.com/articles/vEv2ey这个链接中找到 这两个对应的 zip 版本来替代tar.gz版本
+
+ 2.3 别的可以在官网下载
+
+--add-module=/root/nginx-redis-rely/ngx_devel_kit-0.3.0 \
+--add-module=/root/nginx-redis-rely/echo-nginx-module-0.57 \
+--add-module=/root/nginx-redis-rely/ngx_http_redis-0.3.8 \
+--add-module=/root/nginx-redis-rely/srcache-nginx-module \       ----------这个是采用zip解压后的文件
+--add-module=/root/nginx-redis-rely/redis2-nginx-module \        ----------这个是采用zip解压后的文件
+--add-module=/root/nginx-redis-rely/set-misc-nginx-module-0.31
+
+
+所以，只要完整的文件和路径设置好后可以一次性安装
+
+1 配置：
+./configure --prefix=/root/nginx1.8 \
+--with-http_realip_module \
+--with-http_sub_module \
+--with-http_flv_module \
+--with-http_dav_module \
+--with-http_gzip_static_module \
+--with-http_stub_status_module \
+--with-http_addition_module \
+--with-http_ssl_module \
+--with-pcre=/root/nginx-rely/pcre-8.38 \
+--with-openssl=/root/nginx-rely/openssl-1.0.0a \
+--with-zlib=/root/nginx-rely/zlib-1.2.8 \
+--add-module=/root/nginx-redis-rely/ngx_devel_kit-0.3.0 \
+--add-module=/root/nginx-redis-rely/echo-nginx-module-0.57 \
+--add-module=/root/nginx-redis-rely/ngx_http_redis-0.3.8 \
+--add-module=/root/nginx-redis-rely/srcache-nginx-module \
+--add-module=/root/nginx-redis-rely/redis2-nginx-module \
+--add-module=/root/nginx-redis-rely/set-misc-nginx-module-0.31
+
+2 编译：
+make
+
+3 安装：
+make install 
+
+
+
+
+
+
+
