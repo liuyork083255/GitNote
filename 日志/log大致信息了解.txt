@@ -32,6 +32,9 @@ slf4j绑定logback的用法：
 </dependency>
 网上教程添加了很多，其实只要添加这一个，其他的依赖jar都会被下载下来。
 
+但是这都是基于springboot的，如果是是针对spirngmvc，那么还要引入别的依赖，并且还要在web.xml
+文件里面配置监听类，监听logback.xml这个文件
+
 
 
 
