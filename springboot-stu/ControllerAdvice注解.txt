@@ -1,0 +1,23 @@
+这个注解最容易被理解成了是 controller 层的异常处理类，其实不然
+他的作用是将他自己的定义的方法全部施加到全局的controller上，
+即把@ControllerAdvice注解内部使用@ExceptionHandler、@InitBinder、@ModelAttribute注解的方法应用到所有的 @RequestMapping注解的方法。
+非常简单，不过只有当使用@ExceptionHandler最有用，另外两个用处不大。
+
+
+自己写一个类被 @ControllerAdvice 注解，里面的 @ExceptionHandler 作用就是添加到每一个controller的方法上，
+如果哪一个方法出现异常，就会被这个注解捕获，执行相应的逻辑处理。
+
+
+
+其实主要还是理解，
+这一句话：@ControllerAdvice注解内部使用@ExceptionHandler、@InitBinder、@ModelAttribute注解的方法应用到所有的 @RequestMapping注解的方法。
+
+也就是自己写一个类，里面有三个方法分别用这个三个注解注释，然后别的controller的方法就有了这三个注解的功能，方便，不容一个一个写。
+
+最常用的就是异常处理，然后就是另外两个，可以看springboot实战PDF
+
+
+
+
+
+

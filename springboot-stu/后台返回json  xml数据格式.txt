@@ -1,0 +1,29 @@
+我们前台的给后台的 json 数据被@RequestBody转为一个 bean 对象，这个
+步骤其实是由一个jar包依赖的，jackson-databind
+这个jar包就是让 bean 和 json 相互转换，也就是转为给 @RequestBody 和 @ResponseBody 两个注解来使用的
+
+其实还有一个jar包也能替代这个 jackson-databind   那就是：jackson-dataformat-xml
+这jar包里面包含了 jackson-databind，同时还支持将 将xml格式 数据 和 bean  相互转为，但是
+我们一般都是用 json 格式数据，所以一般就是用上面那个jar包就阔以了
+
+
+以上是依赖原理，但是如果使用springboot的话，其实就不用引入了，它是自带滴
+
+
+
+这里讲一下json和xml如何方便给前台返回吧
+	如果想能够返回xml，那么就用上面说的第二种jar包
+
+在Controller的方法里面使用注解
+	@RequestBody
+	@EequestMapping(value="/getJson",produces={"application/json;charset=UTF-8"})
+	这个时候就会返回json格式给前台
+	
+	@RequestBody
+	@EequestMapping(value="/getXml",produces={"application/xml;charset=UTF-8"})
+	这个时候就会返回xml格式给前台
+
+
+
+
+
