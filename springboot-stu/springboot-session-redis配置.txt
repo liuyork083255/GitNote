@@ -1,0 +1,48 @@
+原理就是 spring 提供了一个拦截器，用于拦截请求，将session做了一次封装，应用程序中获取的
+session其实就是封装过后的session
+
+maven依赖：
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-redis</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.session</groupId>
+      <artifactId>spring-session</artifactId>
+      <version>1.3.0.RELEASE</version>
+    </dependency>
+	
+配置session
+@Configuration
+@EnableRedisHttpSession(maxInactiveIntervalInSeconds = 3600)         --------------       开启对springsession的支持，并且设置了失效时间
+public class RedisSessionConfig {
+    @Value("${spring.redis.host}")
+    private String redisHost;
+    @Value("${spring.redis.port}")
+    private String redisPort;
+
+    @Bean
+    public RedisConnectionFactory connectionFactory(){                            --------        注册一个redis连接工厂
+        JedisConnectionFactory connectionFactory = new JedisConnectionFactory();
+        connectionFactory.setHostName(redisHost);
+        connectionFactory.setPort(Integer.parseInt(redisPort));
+        return connectionFactory;
+    }
+}
+
+以上就配置好了
+
+然后在项目里面获取到的session就是spring提供的session了，并且和redis结合，往里面存入值，就会自动加入到redis中，并且加入的内容貌似加过密的
+
+
+
+
+
+
+
+
+
+
+
+
+

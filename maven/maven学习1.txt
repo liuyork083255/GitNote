@@ -1,0 +1,163 @@
+
+1 maven的插件和依赖区别：
+	前者是工具，可有可无，有了利于开发人员
+	后者是必须要有的，不然编译失败
+
+2 父pom中的依赖如何被子pom使用
+	并不是父pom中的依赖，都会被子pom继承，如果是是写在父pom的dependency中的依赖，那么
+	子pom会自动继承，如果是写在dependencyManagement中的依赖，那么子pom要使用就必须用
+	dependency申明。
+
+3 子pom继承父pom关于relativePath
+	如果一个test-parent和一个test-son的两个maven项目：
+	relativePath的默认值为../pom.xml，如果test-son的根目录在test-parent下，那么relativePath就可以不写了。
+	如果两者在同一个目录下，那么就必须写 ../test-parent/pom.xml ，否则找不到。
+
+
+4 pom文件模块优化
+	参考链接：http://www.cnblogs.com/Brake/p/maven_pom_optimization.html
+	
+	web-service   <--------------web-app------------->web-dal
+           |                            |                   | 
+           |                            |                   |
+           |                            |                   |
+           |                            V                   |
+            ------------------------->log4j <----------------      
+                                                          
+上图说明：
+	1 multi-module-project是一个有多个模块构成的项目，模块分别为：web-service、web-app、web-dal
+	2 web-service、web-app、web-dal分别依赖与log4j
+	3 web-app同时依赖web-service和web-dal，因为这三个模块属于同一个project，所以这种依赖叫做兄弟依赖。
+
+
+	由于三个模块同时依赖与log4j组件，如果在web-service，web-app，以及web-dal的pom文件中分别都加入对log4j的依赖（首先，这是可以的）
+	就会出现一个问题：当log4j有新的版本出现，且自己的项目想引入这个新版本，由于每个模块都配置了对log4j的依赖，
+	那么就需要在每个模块的pom文件中进行修改，工作量很大，且如果模块多，类似的重复依赖也多，就容易出现有些模块漏修改的问题，容易产生问题。
+
+	该问题就犹如有很多重复代码大量存在于不同的模块，当有针对这块重复代码逻辑修改的时候，就需要大量的人力去到处修改，
+	且容易出错。怎么办？代码中的问题可以通过把这个重复代码单独封装，然后多出进行调用。这样有需求变动时只需要修改一个地方即可。
+
+
+maven的pom文件优化类似，maven中可以将这些子模块中相同的依赖移到父模块的dependencyManagement节点。
+
+最佳实践：如果有两个以上的子模块共同依赖一个组件，那么对于这个组建的依赖就应该放在父模块的dependencyManagement节点
+
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>>4.0.0</modelVersion>
+
+    <groupId>com.cnblogs.kmpp</groupId>
+    <artifactId>multi-module</artifactId>
+    <packaging>pom</packaging>
+    <version>1.0-SNAPSHOT</version>
+    <modules>
+        <module>web-app</module>
+        <module>web-service</module>
+        <module>web-dal</module>
+    </modules>
+<dependencyManagement>
+    <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+        </dependency>
+    </dependencies>
+</dependencyManagement>
+</project>
+
+当然如果将依赖移到父模块的dependencyManagement模块后，需要在子模块中将对应的依赖删除，否则，子模块的配置会覆盖父模块的配置。
+
+
+版本重复
+	问题描述：
+
+<dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-annotations</artifactId>
+            <version>3.3.0.ga</version>                       这里和下面的重复
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate-commons-annotations</artifactId>
+            <version>3.3.0.ga</version>                       这里和上面的重复
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate</groupId>
+            <artifactId>hibernate</artifactId>
+             <version>3.2.5.ga</version>
+        </dependency>
+</dependencies>
+
+
+版本重复解决：
+	使用属性元素（property），统一定义版本号，多处进行使用
+	<properties>
+    		<hibernate.annotations.version>3.3.0.ga</hibernate.annotations.version>
+	</properties>
+
+
+	这样当org.hibernate的版本号变化的时候只需要修改以地方。其实版本号类似于程序里面的magic number。不管是不是多次使用，
+	最好都通过定义property来实现，上面的junit的版本号也应该预先在property中进行定义，然后再使用。
+
+
+
+兄弟依赖问题：
+	问题描述： web-app依赖web-dal和web-service组件
+        <dependency>
+            <groupId>com.cnblogs.kmpp</groupId>
+            <artifactId>web-service</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.cnblogs.kmpp</groupId>
+            <artifactId>web-dal</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+	
+	上面的依赖同样有重复：groupId和version。
+
+兄弟依赖问题解决：
+	因为web-app、web-dal以及web-service作为兄弟模块他们的groupId和version是和父模块是一样的。
+	所以兄弟依赖的groupId和version可以使用父模块的数据：
+
+	<dependency>
+            <groupId>${parent.groupId}</groupId>
+            <artifactId>web-service</artifactId>
+            <version>${parent.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>${parent.groupId}</groupId>
+            <artifactId>web-dal</artifactId>
+            <version>${parent.version}</version>
+        </dependency>
+
+	当然，兄弟依赖的重复也可以通过property来定义解决，但是没有直接使用父模块属性方便。
+
+
+maven依赖分析：
+	maven已经提供了命令：
+		1 mvn dependency:analyze，使用该命令就可以看到maven分析的结果和建议
+		2 mvn dependency:tree，使用该命令可以看到maven的依赖树。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
