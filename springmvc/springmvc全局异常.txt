@@ -1,0 +1,18 @@
+一般情况下我们都是自定义异常 实现 HandlerExceptionResolver 接口，然后注入到spring中
+
+其实springmvc中也有这个HandlerExceptionResolver的实现类，比如最常见的就是 SimpleMappingExceptionResolver
+	他的特点就是直接在springmvc的配置文件中注入这个类即可，这个类主要的特点就是可以配置指定的异常类型，然后跳转到指定的处理页面
+	
+注意：网上说在一些低版本的tomcat中如果抛出一个异常被上面两种情况都捕捉到了，有可能会出现异常死循环。
+	后面好像处理了这个bug，以后设置的时候需要注意这一点
+
+
+
+
+
+
+
+
+
+
+
