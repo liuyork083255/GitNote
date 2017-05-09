@@ -1,0 +1,77 @@
+
+Sequence
+
+	Sequence是Disruptor最核心的组件，上面已经提到过了。生产者对RingBuffer的互斥访问，生产者与消费者之间的协调以及消费者之间的协调，
+	都是通过Sequence实现。几乎每一个重要的组件都包含Sequence。那么Sequence是什么呢？首先Sequence是一个递增的序号，
+	说白了就是计数器；其次，由于需要在线程间共享，所以Sequence是引用传递，并且是线程安全的；再次，Sequence支持CAS操作；
+	最后，为了提高效率，Sequence通过padding来避免伪共享。
+
+RingBuffer
+
+	RingBuffer是存储消息的地方，通过一个名为cursor的Sequence对象指示队列的头，协调多个生产者向RingBuffer中添加消息，
+	并用于在消费者端判断RingBuffer是否为空。巧妙的是，表示队列尾的Sequence并没有在RingBuffer中，而是由消费者维护。
+	这样的好处是多个消费者处理消息的方式更加灵活，可以在一个RingBuffer上实现消息的单播，多播，流水线以及它们的组合。
+	其缺点是在生产者端判断RingBuffer是否已满是需要跟踪更多的信息，为此，在RingBuffer中维护了一个名为gatingSequences的Sequence数组来跟踪相关Seqence。
+
+SequenceBarrier
+
+	SequenceBarrier用来在消费者之间以及消费者和RingBuffer之间建立依赖关系。在Disruptor中，依赖关系实际上指的是Sequence的大小关系，
+	消费者A依赖于消费者B指的是消费者A的Sequence一定要小于等于消费者B的Sequence，这种大小关系决定了处理某个消息的先后顺序。
+	因为所有消费者都依赖于RingBuffer，所以消费者的Sequence一定小于等于RingBuffer中名为cursor的Sequence，
+	即消息一定是先被生产者放到Ringbuffer中，然后才能被消费者处理。
+
+	SequenceBarrier在初始化的时候会收集需要依赖的组件的Sequence，RingBuffer的cursor会被自动的加入其中。
+	需要依赖其他消费者和/或RingBuffer的消费者在消费下一个消息时，会先等待在SequenceBarrier上，
+	直到所有被依赖的消费者和RingBuffer的Sequence大于等于这个消费者的Sequence。当被依赖的消费者或RingBuffer的Sequence有变化时，
+	会通知SequenceBarrier唤醒等待在它上面的消费者。
+
+WaitStrategy
+
+	当消费者等待在SequenceBarrier上时，有许多可选的等待策略，不同的等待策略在延迟和CPU资源的占用上有所不同，可以视应用场景选择：
+	BusySpinWaitStrategy ： 自旋等待，类似Linux Kernel使用的自旋锁。低延迟但同时对CPU资源的占用也多。
+	BlockingWaitStrategy ： 使用锁和条件变量。CPU资源的占用少，延迟大。
+	SleepingWaitStrategy ： 在多次循环尝试不成功后，选择让出CPU，等待下次调度，多次调度后仍不成功，尝试前睡眠一个纳秒级别的时间再尝试。
+		这种策略平衡了延迟和CPU资源占用，但延迟不均匀。
+	YieldingWaitStrategy ： 在多次循环尝试不成功后，选择让出CPU，等待下次调。平衡了延迟和CPU资源占用，但延迟也比较均匀。
+	PhasedBackoffWaitStrategy ： 上面多种策略的综合，CPU资源的占用少，延迟大。
+
+BatchEvenProcessor
+
+	在Disruptor中，消费者是以EventProcessor的形式存在的。其中一类消费者是BatchEvenProcessor。
+	每个BatchEvenProcessor有一个Sequence，来记录自己消费RingBuffer中消息的情况。所以，一个消息必然会被每一个BatchEvenProcessor消费。
+
+WorkProcessor
+
+	另一类消费者是WorkProcessor。每个WorkProcessor也有一个Sequence，多个WorkProcessor还共享一个Sequence用于互斥的访问RingBuffer。
+	一个消息被一个WorkProcessor消费，就不会被共享一个Sequence的其他WorkProcessor消费。这个被WorkProcessor共享的Sequence相当于尾指针。
+
+WorkerPool
+
+	共享同一个Sequence的WorkProcessor可由一个WorkerPool管理，这时，共享的Sequence也由WorkerPool创建。
+
+
+
+还有以下一些概念：
+	最原始的ringbuffer的编程有点麻烦，api比较多，实现一个生产者-消费者模式代码量多，
+	比如直接创建爱你ringbuffer的，而不是将ringbuffer交给disruptor来处理。
+	所以引入了disruptor，它的api比较简单。而它的的编程思想就是---参照 使用disruptor的几个步骤
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
