@@ -1,0 +1,46 @@
+首先明白，handler就是消费者的意思，在disruptor里面，是将所有的handler交给disruptor管理，
+	一旦有事件产生，那么就会自动调用这些handler进行处理，里面的每个消费者的 processor（可以理解成指针）也是内部自动维护。
+		这里有一个概念：生产者只有一个processor，并且是在ringbuffer这边，靠CAS策略维护，而消费者是各自都会有一个processor，各自维护。
+		
+
+
+handler就是消费者，需要我们自己定义，需要实现对应的接口，常见的就是 EventHandler 和 WorkHandler，
+	他们都需要实现一个方法，也就是我们需要执行的消费代码。
+	由于是和disruptor结合，所以这些的handler最后都要交给disruptor来处理，分别调用如下方法进行加入到disruptor中：
+		disruptor.handleEventsWith(new MyEventHandler1(),new MyEventHandler2());
+		disruptor.handleEventsWithWorkerPool(new MyEventWorkHandler1(),new MyEventWorkHandler2());
+	
+	所以对比一：
+		两者的加入disruptor的调用方法不同。
+	对比二：
+		如果是 eventhandler，那么每一个事件都会被所有的eventhandler消费，也就是每一个handler都可以获取所有的事件；
+		如果是 workhandler，那么每一个事件只会被其中的一个enenthandler消费，至于是哪一个，应该是随机的吧（这个目前不清楚）
+
+
+这里额外补充一下，就是每一个handler可以有一个依赖关系，也就是hankler其实是可以设置它们的先后执行顺序
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
