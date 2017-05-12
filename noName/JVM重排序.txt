@@ -1,0 +1,84 @@
+
+指令重排序是JVM为了优化指令，提高程序运行效率，在不影响单线程程序执行结果的前提下，尽可能地提高并行度。编译器、处理器也遵循这样一个目标。
+	注意是单线程。多线程的情况下指令重排序就会给程序员带来问题。
+
+例如：
+	double r = 2.3d;//(1)
+	double pi =3.1415926; //(2)	
+	double area = pi* r * r; //(3)
+
+	在单线程中，JVM重排序绝对不会影响最后结构，否则就违反了 编译器、Runtime、处理器必须遵守的规则。
+	所以上面的语句 重拍只会出现在 1 和 2 之间，以为结果 3 不管1/2 谁先谁后，计算结构肯定不变。这就是单线程不影响结果重排序需要遵守的。
+	
+
+
+但是为什么老是说在多线程中重拍会出现问题呢？
+
+public class Singleton {
+  private static Singleton instance = null;
+  private Singleton() { }
+  public static Singleton getInstance() {
+     if(instance == null) {
+        synchronzied(Singleton.class) {
+           if(instance == null) {
+               instance = new Singleton();  //非原子操作
+           }
+        }
+     }
+     return instance;
+   }
+}
+
+这是一个单例模型（没有加锁），所以很明显会有同步问题，原因就是因为 instance = new Singleton();  //非原子操作
+
+分析：
+	看似简单的一段赋值语句：instance= new Singleton()，但是很不幸它并不是一个原子操作，其实际上可以抽象为下面几条JVM指令：
+		memory =allocate();    //1：分配对象的内存空间 
+		ctorInstance(memory);  //2：初始化对象 
+		instance =memory;     //3：设置instance指向刚分配的内存地址 
+
+	上面操作2依赖于操作1，但是操作3并不依赖于操作2，所以JVM是可以针对它们进行指令的优化重排序的，经过重排序后如下：
+		memory =allocate();    //1：分配对象的内存空间 
+		instance =memory;     //3：instance指向刚分配的内存地址，此时对象还未初始化
+		ctorInstance(memory);  //2：初始化对象
+
+	可以看到指令重排之后，instance指向分配好的内存放在了前面，而这段内存的初始化被排在了后面。
+	在线程A执行这段赋值语句，在初始化分配对象之前就已经将其赋值给instance引用，恰好另一个线程进入方法判断instance引用不为null，然后就将其返回使用，导致出错。
+
+所以这一类的同步问题就是由JVM重排指令的所导致的。
+
+
+
+volatile是可以防止重排序的，但是它有自己的局限性：
+	1、 对变量的写入操作不依赖变量的当前值。
+	2、 该变量没有包含在具有其他变量的不变式中。
+
+	
+
+volatile和synchronized：
+
+	目前这样理解：
+		synchronized是针对模块或者方法级别的，很安全
+		volatile 是针对单个变量的，不是很安全：
+				如果要安全，必须保证当前的变量变化值不受自己的影响，比如 i++   i = i + 100  这样的操作。
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
