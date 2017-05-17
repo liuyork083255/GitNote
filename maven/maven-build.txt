@@ -1,0 +1,89 @@
+build 出现的位置有两个地方
+       （1）全局配置（project build）
+                 针对整个项目的所有情况都有效
+       （2）配置（profile build）
+                 针对不同的profile配置
+
+<project xmlns="http://maven.apache.org/POM/4.0.0"  
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0  
+                      http://maven.apache.org/maven-v4_0_0.xsd">  
+  …  
+  <!– "Project Build" contains more elements than just the BaseBuild set –>  
+  <build>…</build>  这里
+  <profiles>  
+    <profile>  
+      <!– "Profile Build" contains a subset of "Project Build"s elements –>  
+      <build>…</build>   和这里
+    </profile>  
+  </profiles>  
+</project> 
+
+
+下面主要讲全局的配置：
+1 基本元素             ---------------作用是执行mvn命令的时候进行控制输出，说白了就是打包的时候可以打包成什么名称
+<build>  
+        <defaultGoal>install</defaultGoal>                ---------- 执行build任务时，如果没有指定目标，将使用的默认值install。
+        <directory>${basedir}/target</directory>          ---------- build目标文件的存放目录，默认在${basedir}/target目录
+        <finalName>${artifactId}-${version}</finalName>   ---------- build目标文件的名称，默认情况为${artifactId}-${version}
+        <filters>  
+                <filter>filters/filter1.properties</filter>  --------定义*.properties文件，包含一个properties列表，该列表会应用到支持filter的resources中。
+												也就是说，定义在filter的文件中的name=value键值对，会在build时代替${name}值应用到resources中。
+												maven的默认filter文件夹为${basedir}/src/main/filters
+        </filters>  
+         ...  
+</build> 
+
+
+2 resources 配置
+	用于包含或者排除某些资源文件
+<build>  
+        ...  
+       <resources>       
+                  <resource>              ------- 一个resources元素的列表。每一个都描述与项目关联的文件是什么和在哪里
+                        <targetPath>META-INF/plexus</targetPath>    -------指定build后的resource存放的文件夹，默认是basedir。通常被打包在jar中的resources的目标路径是META-INF
+                        <filtering>false</filtering>            ---------- true/false，表示为这个resource，filter是否激活
+            <directory>${basedir}/src/main/plexus</directory>   --------- 定义resource文件所在的文件夹，默认为${basedir}/src/main/resources
+            <includes>         ------指定哪些文件将被匹配，以*作为通配符
+                <include>configuration.xml</include>  
+            </includes>  
+            <excludes>   ---------------指定哪些文件将被忽略
+                <exclude>**/*.properties</exclude>  
+            </excludes>  
+         </resource>  
+    </resources>  
+    <testResources>  -------定义和resource类似，只不过在test时使用
+        ...  
+    </testResources>  
+    ...  
+</build>  
+
+
+2 plugins配置
+<build>  
+    ...  
+    <plugins>   ------------用于指定使用的插件
+        <plugin>  
+            <groupId>org.apache.maven.plugins</groupId>     ---------指定插件的标准坐标
+            <artifactId>maven-jar-plugin</artifactId>       ---------指定插件的标准坐标
+            <version>2.0</version>                          ---------指定插件的标准坐标
+            <extensions>false</extensions>                  --------- 是否加载plugin的extensions，默认为false
+            <inherited>true</inherited>                     --------- true/false，这个plugin是否应用到该pom的孩子pom，默认为true
+            <configuration>                                 ---------配置该plugin期望得到的properties
+                <classifier>test</classifier>  
+            </configuration>  
+            <dependencies>...</dependencies>                 ---------作为plugin的依赖
+            <executions>...</executions>        --------- plugin可以有多个目标，每一个目标都可以有一个分开的配置，可以将一个plugin绑定到不同的阶段 
+															假如绑定antrun：run目标到verify阶段
+        </plugin>  
+    </plugins>  
+</build> 
+
+
+
+
+
+
+
+
+
