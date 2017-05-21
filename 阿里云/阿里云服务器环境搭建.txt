@@ -1,0 +1,91 @@
+申请阿里云的时候可以选择环境，如果是选择是java，那么mysql就会自动安装好（tomcat和jdk 都是 7）
+
+如果要改jdk8，那么就去下载tar.gz包解压就可以是使用了，然后就是配置配置文件
+找到/etc/profile文件，然后更改里面的路径就搞定了
+注意：更改了profile是使的这个文件生效，一个是重启系统，显然不科学，
+	然后就是运行source /etc/profile   然后检查 java-varsion 看看搞定么有
+注意：由于本地系统是windows，所以用文本打开的时候会有格式的错误而导致修改的文件不对，
+所以这个时候就要 notepad++  然后点击 编辑-》文档格式转换，选择对应的系统就可以了
+	
+
+如果要更改tomcat更简单，下载一个tar.gz包解压就可以了，使用跟windows一样
+
+
+mysql 默认安装好的密码如果登陆不进去 需要改动一下 参考链接：http://www.2cto.com/os/201507/422046.html
+1 先#/etc vi my.cnf 这个文件找到，然后找到[mysqld]字段，在后面加上 skip-grant-tables
+	这句的作用是让你不用密码就可以登录MySQL
+
+2 接下来就是重启MySQL   #/etc/init.d/mysqld restart
+
+3 在接下来就是无密码登录MySQL  #mysql -u root
+
+4 进入后 mysql > use mysql  
+
+5 选择数据库后 UPDATE user SET password=password(‘123456’) WHERE User=’root’；
+
+6 最后使权限生效   Mysql > flush privileges ;
+
+下面自己读
+
+然后把my.cnf的修改再改回去，不然 就是不需要密码就可以登录数据库了，
+
+ 
+
+#/etc vi my.cnf
+
+ 
+
+之后找到[mysqld]的段，删去先前插入的那一行：
+
+ 
+
+去掉skip-grant-tables
+
+ 
+
+然后退出来，再重新启动mysql
+
+ 
+
+#/etc/init.d/mysqld restart
+
+ 
+
+接下来就是登录了，
+
+
+
+#mysql -uroot -p
+
+Enter password:123456
+
+
+
+由于阿里云mysql的数据库默认是不被外网访问的，所以需要设置
+	登陆myql后   输入   grant all privileges on *.* to 'root'@'%' identified by '123456' with grant option;  就搞定了
+	连重启都不用呀
+
+
+
+如果是使用的ubantu系统，那么默认是没有防火墙的，如果想用，
+	$sudo ufw default deny          开启防火墙
+	$sudo ufw enable				设置重启自动开启
+注意：如果设置了防火墙，一定要记得随后开启22端口，因为开启防火墙以后，好像是会禁掉所有端口，
+	以后就链接不上了
+	
+$sudo ufw allow 22   开启哪一个端口
+$sudo ufw status   查看已经打开的端口列表
+
+
+$sudo ufw delete allow 22   关闭哪一个端口
+
+还可以设置指定一个IP可以访问本机所有端口，也可以指定一个ip不能访问本机
+
+
+
+
+
+
+
+
+
