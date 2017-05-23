@@ -1,0 +1,13 @@
+参考链接： http://blog.csdn.net/jinzhencs/article/details/50748202
+
+
+里面主要讲了 lambda 和 stream ，看完后简单的认识和应用都是OK的
+
+
+
+
+
+
+
+
+
