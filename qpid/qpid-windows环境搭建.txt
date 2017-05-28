@@ -1,0 +1,223 @@
+首先去官网去下载 qpid-server ：http://www.apache.org/dyn/closer.lua/qpid/java/6.1.2/binaries/qpid-broker-6.1.2-bin.tar.gz
+
+下载后直接解压，然后进入bin目录有一个 qpid-server.bat windows 启动命令，直接双击就可以了
+
+启动后就可以 使用浏览器 输入http://localhost:8080/进入管理界面，
+	user：admin
+	pass：admin
+
+	
+	
+	
+java程序 Sender 和 Receiver 配置链接
+首先是引入 maven 依赖
+	<!-- https://mvnrepository.com/artifact/org.apache.qpid/qpid-jms-client -->
+	<dependency>
+		<groupId>org.apache.qpid</groupId>
+		<artifactId>qpid-jms-client</artifactId>
+		<version>0.23.0</version>
+	</dependency>
+	
+	在资源文件中创建 jndi.properties 文件，并输入以下内容
+		java.naming.factory.initial = org.apache.qpid.jms.jndi.JmsInitialContextFactory   #这个是固定不用更改
+		connectionfactory.myFactoryLookup = amqp://localhost:5672   # ip是指servier启动的主机，端口是是监听端口，而不是8080
+		queue.myQueueLookup = helloqueue             # 这个说明当前的client要链接服务端的那个 queue
+		topic.myTopicLookup = amq.topic              # 这个说明当前的client要链接服务端的那个 topic
+			注意：queue都是需要创建，可以在server管理界面直接创建
+				进入Broker/virtualhostnodes/default/virtualhosts/default   这个时候直接双击default目录就会出现一个对应的界面
+				然后可以找到 Queues 面板，然后下面有一个 Add Queues 按钮
+				创建的queue名称一定和 jndi.properties 配置文件中的 queue.myQueueLookup 一致
+				
+				
+然后就是Sender类：
+import javax.jms.Connection;  
+import javax.jms.ConnectionFactory;  
+import javax.jms.DeliveryMode;  
+import javax.jms.Destination;  
+import javax.jms.ExceptionListener;  
+import javax.jms.JMSException;  
+import javax.jms.Message;  
+import javax.jms.MessageProducer;  
+import javax.jms.Session;  
+import javax.jms.TextMessage;  
+import javax.naming.Context;  
+import javax.naming.InitialContext;  
+
+  
+public class Sender {  
+    private static final String USER = "guest";             
+    private static final String PASSWORD = "guest";  
+    private static final int DEFAULT_COUNT = 10;  
+    private static final int DELIVERY_MODE = DeliveryMode.NON_PERSISTENT;  
+  
+  
+    public void publish(int count) {  
+        try {   
+            Context context = new InitialContext();   //注意：这里很多别的都是引入 jndi.properties 文件的 context，自己
+															测试的老是出错，这里就直接 new，默认回去类路径下去找 jndi.properties 文件的 
+  
+            ConnectionFactory factory = (ConnectionFactory) context.lookup("myFactoryLookup");  
+            Destination queue = (Destination) context.lookup("myQueueLookup");  
+  
+            Connection connection = factory.createConnection(USER, PASSWORD);   //用户验证，不要将验证信息放在url里面，不然一直报错，我也不晓得怎么回事
+            connection.setExceptionListener(new MyExceptionListener());  
+            connection.start();  
+  
+            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);  
+  
+            MessageProducer messageProducer = session.createProducer(queue);  
+  
+            long start = System.currentTimeMillis();  
+            for (int i = 1; i <= count; i++) {  
+                TextMessage message = session.createTextMessage("diu  ne  lao  mu  a  !");  
+                messageProducer.send(message, DELIVERY_MODE, Message.DEFAULT_PRIORITY, Message.DEFAULT_TIME_TO_LIVE);  
+  
+                if (i % 100 == 0) {  
+                    System.out.println("Sent message " + i);  
+                }  
+            }  
+  
+            long finish = System.currentTimeMillis();  
+            long taken = finish - start;  
+            System.out.println("Sent " + count + " messages in " + taken + "ms");  
+  
+            connection.close();  
+        } catch (Exception exp) {  
+            System.out.println("Caught exception, exiting.");  
+            exp.printStackTrace(System.out);  
+            System.exit(1);  
+        }  
+    }  
+  
+    public static void main(String[] args) throws Exception {  
+        int count = DEFAULT_COUNT;  
+        if (args.length == 0) {  
+            System.out.println("Sending up to " + count + " messages.");  
+            System.out  
+                    .println("Specify a message count as the program argument if you wish to send a different amount.");  
+        } else {  
+            count = Integer.parseInt(args[0]);  
+            System.out.println("Sending up to " + count + " messages.");  
+        }  
+        Sender sender=new Sender();  
+        sender.publish(count);  
+  
+    }  
+  
+    private static class MyExceptionListener implements ExceptionListener {  
+        
+        public void onException(JMSException exception) {  
+            System.out.println("Connection ExceptionListener fired, exiting.");  
+            exception.printStackTrace(System.out);  
+            System.exit(1);  
+        }  
+    }  
+}
+				
+				
+Reveciver类：
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.Destination;
+import javax.jms.ExceptionListener;
+import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.Session;
+import javax.jms.TextMessage;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+
+public class Receiver {
+    private static final int DEFAULT_COUNT = 10;
+
+    public static void main(String[] args) throws Exception {
+        int count = DEFAULT_COUNT;
+        if (args.length == 0) {
+            System.out.println("Consuming up to " + count + " messages.");
+            System.out.println("Specify a message count as the program argument if you wish to consume a different amount.");
+        } else {
+            count = Integer.parseInt(args[0]);
+            System.out.println("Consuming up to " + count + " messages.");
+        }
+
+        try {
+            // The configuration for the Qpid InitialContextFactory has been supplied in
+            // a jndi.properties file in the classpath, which results in it being picked
+            // up automatically by the InitialContext constructor.
+            Context context = new InitialContext();
+
+            ConnectionFactory factory = (ConnectionFactory) context.lookup("myFactoryLookup");
+            //Destination queue = (Destination) context.lookup("myQueueLookup");
+            Destination queue = (Destination) context.lookup("myQueueLookup");
+            
+            Connection connection = factory.createConnection("guest", "guest");  //用户验证，不要将验证信息放在url里面，不然一直报错，我也不晓得怎么回事
+            connection.setExceptionListener(new MyExceptionListener());
+            connection.start();
+
+            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+
+            MessageConsumer messageConsumer = session.createConsumer(queue);
+            
+            long start = System.currentTimeMillis();
+
+            int actualCount = 0;
+            boolean deductTimeout = false;
+            int timeout = 1000;
+            for (int i = 1; i <= count; i++, actualCount++) {
+                Message message = messageConsumer.receive();
+                TextMessage t = (TextMessage)message;   //这里将mssage强转为了 TextMessage,这样就可以直接调用getText方法获取文本信息了
+                
+                if (message == null) {
+                    System.out.println("Message " + i + " not received within timeout, stopping.");
+                    deductTimeout = true;
+                    break;
+                }
+                System.out.println("The message:"+t.getText());      
+                
+                if (i % 100 == 0) {
+                    System.out.println("Got message " + i);
+                }
+            }
+
+            long finish = System.currentTimeMillis();
+            long taken = finish - start;
+            if (deductTimeout) {
+                taken -= timeout;
+            }
+            System.out.println("Received " + actualCount + " messages in " + taken + "ms");
+
+            connection.close();
+        } catch (Exception exp) {
+            System.out.println("Caught exception, exiting.");
+            exp.printStackTrace(System.out);
+            System.exit(1);
+        }
+    }
+
+    private static class MyExceptionListener implements ExceptionListener {
+        public void onException(JMSException exception) {
+            System.out.println("Connection ExceptionListener fired, exiting.");
+            exception.printStackTrace(System.out);
+            System.exit(1);
+        }
+    }
+}
+				
+				
+当服务端发送了后，可以在server的管理界面对应的queue下面看到发送的信息，
+这个时候接收方只要接上就可以获取了，如果接收方链接成功后没有信息可以获取，那么
+就会阻塞，知道有信息才会断开连接
+
+上面的这种模式是 异步的，也就是生产者的信息直接放在 queue 中，不管消费者是否在线，
+当消费者上线后，就直接获取，每获取一个信息就会减少一个，不会一直存在
+				
+				
+				
+				
+				
+				
+				
+
+
+
