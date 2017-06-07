@@ -63,7 +63,7 @@ public class Sender {
             connection.setExceptionListener(new MyExceptionListener());  
             connection.start();  
   
-            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);  
+            Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE); 
   
             MessageProducer messageProducer = session.createProducer(queue);  
   
