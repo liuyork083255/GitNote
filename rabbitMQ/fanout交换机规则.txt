@@ -1,0 +1,107 @@
+
+在1 和 2 笔记中，生产者都是直接发送到服务端的队列中，但是在真实的使用中这种方式基本是不使用的，
+	rabbitMQ其实真正的思想是生产者不发送任何信息到队列，甚至不知道信息将发送到哪个队列。
+	相反生产者只能发送信息到交换机，交换机接收到生产者的信息，然后按照规则把它推送到对列中
+
+fanout 交换机模式：
+	不处理路由键。你只需要简单的将队列绑定到交换机上。
+	生产者只管自己发，消费者什么时候连接上，就得到什么时候的数据。
+	一个发送到交换机的消息都会被转发到与该交换机绑定的所有队列上。
+	很像子网广播，每台子网内的主机都获得了一份复制的消息。Fanout交换机转发消息是最快的。
+
+生产者：
+public class EmitLog {
+
+	//定义交换机名称
+    private static final String EXCHANGE_NAME = "logs";
+	
+    public static void main(String[] args) throws Exception {
+        ConnectionFactory factory=new ConnectionFactory();
+        factory.setHost("localhost");
+        Connection connection=factory.newConnection();
+        Channel channel=connection.createChannel();
+
+		//执行这段代码，就会创建名称为 EXCHANGE_NAME 的交换机
+        channel.exchangeDeclare(EXCHANGE_NAME,"fanout");//fanout表示分发，所有的消费者得到同样的队列信息
+		
+		//下面这段代码可以有，也可以没有
+		如果没有，由于发送的消息都是发到交换机，如果没有下面这段代码，就不会创建与 logs 绑定的队列，
+			那么消息就无法发送到队列中，除非服务端原本就有这个绑定好的的队列
+		如果有，那么就会创建该队列，并且将消息存入到队列中，等待消费者消费
+		
+		一般情况下应该是由消费者来创建吧，因为这种模式是订阅模式，消费者链接上之后才可以获取消息，不会补全以前发的消息
+		=========================================================================
+		channel.queueDeclare("logs_queue1",false,false,false,null);  
+        channel.queueBind("logs_queue1", EXCHANGE_NAME, "routingKey1"); 
+		=========================================================================
+		
+        //分发信息
+        for (int i=0;i<5;i++){
+            String message="Hello World"+i;
+			
+			//********注意：如果是 fanout 模式，第二个参数必须为空字符串，这样就不会路由，只要绑定到logs的交换机都会收到消息
+				就算队列绑定了路由key ，也是无效的
+            channel.basicPublish(EXCHANGE_NAME,"",null,message.getBytes());
+            System.out.println("EmitLog Sent '" + message + "'");
+        }
+        channel.close();
+        connection.close();
+    }
+}
+
+
+消费者：
+这里可以创建多个，代码完全一样
+public class ReceiveLogs1 {
+
+    private static final String EXCHANGE_NAME = "logs";
+
+    public static void main(String[] args) throws Exception {
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost("localhost");
+        Connection connection = factory.newConnection();
+        Channel channel = connection.createChannel();
+
+        channel.exchangeDeclare(EXCHANGE_NAME, "fanout");//创建交换机并且设置模式
+
+        //产生一个随机的队列名称。如果是怕队列重名，可以使用这个方式创建一个随机名称的队列
+		//这种方式创建的队列，当消费者断开完后机会被删除 等同于 
+				channel.queueDeclare("logs_queue1",false,false,true,null); 第四个参数为true
+        //String queueName = channel.queueDeclare().getQueue();
+		
+		//将队列和交换机绑定，第三个是路由 key，由于是fanout模式，所以设置空字符串
+        channel.queueBind(queueName, EXCHANGE_NAME, "");//对队列进行绑定
+
+        System.out.println("ReceiveLogs1 Waiting for messages");
+        Consumer consumer = new DefaultConsumer(channel) {
+        	@Override
+        	public void handleDelivery(String consumerTag, Envelope envelope,BasicProperties properties, byte[] body) throws IOException {
+        		// TODO Auto-generated method stub
+                String message = new String(body, "UTF-8");
+                System.out.println("ReceiveLogs1 Received '" + message + "'");
+        	}
+        };
+
+        channel.basicConsume(queueName, true, consumer);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	

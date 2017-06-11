@@ -1,0 +1,155 @@
+参考链接：http://www.w2bc.com/article/215961
+
+在使用RabbitMQ的时候，我们可以通过消息持久化操作来解决因为服务器的异常奔溃导致的消息丢失，
+	除此之外我们还会遇到一个问题，当消息的发布者在将消息发送出去之后，消息到底有没有正确到达broker代理服务器呢？
+	如果不进行特殊配置的话，默认情况下发布操作是不会返回任何信息给生产者的，
+	也就是默认情况下我们的生产者是不知道消息有没有正确到达broker的，如果在消息到达broker之前已经丢失的话，
+	持久化操作也解决不了这个问题，因为消息根本就没到达代理服务器，你怎么进行持久化，那么这个问题该怎么解决呢？
+
+RabbitMQ为我们提供了两种方式：
+	通过AMQP事务机制实现，这也是AMQP协议层面提供的解决方案；
+	通过将channel设置成confirm模式来实现；
+
+
+事务机制：
+	RabbitMQ中与事务机制有关的方法有三个：txSelect(), txCommit()以及txRollback(), 
+	txSelect用于将当前channel设置成transaction模式，txCommit用于提交事务，txRollback用于回滚事务，
+	在通过txSelect开启事务之后，我们便可以发布消息给broker代理服务器了，如果txCommit提交成功了，
+	则消息一定到达了broker了，如果在txCommit执行之前broker异常崩溃或者由于其他原因抛出异常，
+	这个时候我们便可以捕获异常通过txRollback回滚事务了。
+
+关键代码：
+	channel.txSelect();
+	channel.basicPublish(ConfirmConfig.exchangeName, ConfirmConfig.routingKey, 
+			MessageProperties.PERSISTENT_TEXT_PLAIN, ConfirmConfig.msg_10B.getBytes());
+	channel.txCommit();
+
+
+具体步骤：
+	client发送Tx.Select
+	broker发送Tx.Select-Ok(之后publish)
+	client发送Tx.Commit
+	broker发送Tx.Commit-Ok
+	
+	
+如果出现异常则要回滚：	
+	try {
+		channel.txSelect();//声明事务
+		channel.basicPublish(exchange, routingKey, MessageProperties.PERSISTENT_TEXT_PLAIN, msg.getBytes());
+		int result = 1 / 0;
+		channel.txCommit();
+	} catch (Exception e) {
+		e.printStackTrace();
+		channel.txRollback();
+	}
+	
+	
+注意：使用事务机制的话会降低RabbitMQ的性能，那么有没有更好的方法既能保障producer知道消息已经正确送到，
+	又能基本上不带来性能上的损失呢？从AMQP协议的层面看是没有更好的方法，但是RabbitMQ提供了一个更好的方案，
+	即将channel信道设置成confirm模式。
+	
+	
+	
+	
+	========================================================================================================================================
+	
+	
+	
+	
+Confirm模式：
+	采用事务机制实现会降低RabbitMQ的消息吞吐量，那么有没有更加高效的解决方式呢？答案是采用Confirm模式。
+	
+	生产者将信道设置成confirm模式，一旦信道进入confirm模式，所有在该信道上面发布的消息都会被指派一个唯一的ID(从1开始)，
+	一旦消息被投递到所有匹配的队列之后，broker就会发送一个确认给生产者（包含消息的唯一ID）,
+	这就使得生产者知道消息已经正确到达目的队列了，如果消息和队列是可持久化的，那么确认消息会将消息写入磁盘之后发出，
+	broker回传给生产者的确认消息中deliver-tag域包含了确认消息的序列号，此外broker也可以设置basic.ack的multiple域，
+	表示到这个序列号之前的所有消息都已经得到了处理。
+	
+	confirm模式最大的好处在于他是异步的，一旦发布一条消息，生产者应用程序就可以在等信道返回确认的同时继续发送下一条消息，
+	当消息最终得到确认之后，生产者应用便可以通过回调方法来处理该确认消息，如果RabbitMQ因为自身内部错误导致消息丢失，
+	就会发送一条nack消息，生产者应用程序同样可以在回调方法中处理该nack消息。
+	
+	在channel 被设置成 confirm 模式之后，所有被 publish 的后续消息都将被 confirm（即 ack） 或者被nack一次。
+	但是没有对消息被 confirm 的快慢做任何保证，并且同一条消息不会既被 confirm又被nack 。
+	
+	
+开启confirm模式：
+	生产者通过调用channel的confirmSelect方法将channel设置为confirm模式，如果没有设置no-wait标志的话，
+	broker会返回confirm.select-ok表示同意发送者将当前channel信道设置为confirm模式
+	(从目前RabbitMQ最新版本3.6来看，如果调用了channel.confirmSelect方法，默认情况下是直接将no-wait设置成false的，
+	也就是默认情况下broker是必须回传confirm.select-ok的)。
+	
+	注意：已经在transaction事务模式的channel是不能再设置成confirm模式的，即这两种模式是不能共存的。
+
+客户端实现生产者confirm有三种编程方式：
+	普通confirm模式：每发送一条消息后，调用waitForConfirms()方法，等待服务器端confirm。实际上是一种串行confirm了。
+	批量confirm模式：每发送一批消息后，调用waitForConfirms()方法，等待服务器端confirm。
+	异步confirm模式：提供一个回调方法，服务端confirm了一条或者多条消息后Client端会回调这个方法。
+
+
+	第1种
+	普通confirm模式最简单，publish一条消息后，等待服务器端confirm,如果服务端返回false或者超时时间内未返回，客户端进行消息重传。
+	代码：
+	channel.basicPublish(ConfirmConfig.exchangeName, ConfirmConfig.routingKey, 
+			MessageProperties.PERSISTENT_TEXT_PLAIN, ConfirmConfig.msg_10B.getBytes());
+	if(!channel.waitForConfirms()){
+		System.out.println("send message failed.");
+	}
+
+	
+	第二种 
+	批量confirm模式稍微复杂一点，客户端程序需要定期（每隔多少秒）或者定量（达到多少条）或者两则结合起来publish消息，
+	然后等待服务器端confirm, 相比普通confirm模式，批量极大提升confirm效率，但是问题在于一旦出现confirm返回false或者超时的情况时，
+	客户端需要将这一批次的消息全部重发，这会带来明显的重复消息数量，并且，当消息经常丢失时，批量confirm性能应该是不升反降的。
+	代码：
+	channel.confirmSelect();
+	for(int i=0;i<batchCount;i++){
+		channel.basicPublish(ConfirmConfig.exchangeName, ConfirmConfig.routingKey, 
+				MessageProperties.PERSISTENT_TEXT_PLAIN, ConfirmConfig.msg_10B.getBytes());
+	}
+	if(!channel.waitForConfirms()){
+		System.out.println("send message failed.");
+	}
+
+
+	第三种
+	异步confirm模式的编程实现最复杂，Channel对象提供的ConfirmListener()回调方法只包含deliveryTag（当前Chanel发出的消息序号），
+	我们需要自己为每一个Channel维护一个unconfirm的消息序号集合，每publish一条数据，集合中元素加1，
+	每回调一次handleAck方法，unconfirm集合删掉相应的一条（multiple=false）或多条（multiple=true）记录。
+	从程序运行效率上看，这个unconfirm集合最好采用有序集合SortedSet存储结构。
+	代码：
+		SortedSet<Long> confirmSet = Collections.synchronizedSortedSet(new TreeSet<Long>());
+		channel.confirmSelect();
+        channel.addConfirmListener(new ConfirmListener() {
+            public void handleAck(long deliveryTag, boolean multiple) throws IOException {
+                if (multiple) {
+                    confirmSet.headSet(deliveryTag + 1).clear();
+                } else {
+                    confirmSet.remove(deliveryTag);
+                }
+            }
+            public void handleNack(long deliveryTag, boolean multiple) throws IOException {
+                System.out.println("Nack, SeqNo: " + deliveryTag + ", multiple: " + multiple);
+                if (multiple) {
+                    confirmSet.headSet(deliveryTag + 1).clear();
+                } else {
+                    confirmSet.remove(deliveryTag);
+                }
+            }
+        });
+
+        while (true) {
+            long nextSeqNo = channel.getNextPublishSeqNo();
+            channel.basicPublish(ConfirmConfig.exchangeName, ConfirmConfig.routingKey, MessageProperties.PERSISTENT_TEXT_PLAIN, ConfirmConfig.msg_10B.getBytes());
+            confirmSet.add(nextSeqNo);
+        }
+
+
+
+
+
+
+
+
+
+

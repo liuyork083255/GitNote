@@ -1,0 +1,109 @@
+
+在1 和 2 笔记中，生产者都是直接发送到服务端的队列中，但是在真实的使用中这种方式基本是不使用的，
+	rabbitMQ其实真正的思想是生产者不发送任何信息到队列，甚至不知道信息将发送到哪个队列。
+	相反生产者只能发送信息到交换机，交换机接收到生产者的信息，然后按照规则把它推送到对列中
+
+topic 交换机模式：
+	将路由键和某模式进行匹配。此时队列需要绑定要一个模式上。符号“#”匹配0个或多个词，
+	符号“*”匹配不多不少一个词。因此“audit.#”能够匹配到“audit.irs.corporate”，但是“audit.*” 只会匹配到“audit.irs”
+	注意：上面说的 #和* 匹配的以词为单位的，也就是单词，而不是以一个字符为你匹配单位的
+
+	
+	代码演示：
+	Channel channel = connection.createChannel();  
+	channel.exchangeDeclare("exchangeName", "topic"); //direct fanout topic  
+	channel.queueDeclare("queueName");  
+	channel.queueBind("queueName", "exchangeName", "routingKey.*");  
+	  
+	byte[] messageBodyBytes = "hello world".getBytes();  
+	channel.basicPublish("exchangeName", "routingKey.one", MessageProperties.PERSISTENT_TEXT_PLAIN, messageBodyBytes);
+
+
+
+生产者：
+public class TopicSend {
+    private static final String EXCHANGE_NAME = "topic_logs";
+
+    public static void main(String[] args) throws IOException, TimeoutException {
+        Connection connection = null;
+        Channel channel = null;
+        try{
+            ConnectionFactory factory=new ConnectionFactory();
+            factory.setHost("localhost");
+            connection=factory.newConnection();
+            channel=connection.createChannel();
+
+            //声明一个匹配模式的交换机
+            channel.exchangeDeclare(EXCHANGE_NAME,"topic");
+            //待发送的消息
+            String[] routingKeys=new String[]{
+                    "quick.orange.rabbit",
+                    "lazy.orange.elephant",
+                    "quick.orange.fox",
+                    "lazy.brown.fox",
+                    "quick.brown.fox",
+                    "quick.orange.male.rabbit",
+                    "lazy.orange.male.rabbit"
+            };
+            //发送消息
+            for(String severity :routingKeys){
+                String message = "From "+severity+" routingKey' s message!";
+                channel.basicPublish(EXCHANGE_NAME, severity, null, message.getBytes());
+                System.out.println("TopicSend Sent '" + severity + "':'" + message + "'");
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            if (connection!=null){
+                channel.close();
+                connection.close();
+            }
+        }finally {
+            if (connection!=null){
+                channel.close();
+                connection.close();
+            }
+        }
+    }
+}
+
+
+消费者1：
+
+public class ReceiveLogsTopic1 {
+    private static final String EXCHANGE_NAME = "topic_logs";
+
+    public static void main(String[] args) throws IOException, TimeoutException {
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost("localhost");
+        Connection connection = factory.newConnection();
+        Channel channel = connection.createChannel();
+
+        //声明一个匹配模式的交换机
+        channel.exchangeDeclare(EXCHANGE_NAME, "topic");
+        String queueName = channel.queueDeclare().getQueue();
+        
+		//路由关键字
+		//消费者2只需要将这里改为 String[] routingKeys = new String[]{"*.*.rabbit", "lazy.#"};
+        String[] routingKeys = new String[]{"*.orange.*"};
+        //绑定路由
+        for (String routingKey : routingKeys) {
+            channel.queueBind(queueName, EXCHANGE_NAME, routingKey);
+            System.out.println("ReceiveLogsTopic1 exchange:" + EXCHANGE_NAME + ", queue:" + queueName + ", BindRoutingKey:" + routingKey);
+        }
+        System.out.println("ReceiveLogsTopic1 Waiting for messages");
+
+        Consumer consumer = new DefaultConsumer(channel) {
+            @Override
+            public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
+                String message = new String(body, "UTF-8");
+                System.out.println("ReceiveLogsTopic1 Received '" + envelope.getRoutingKey() + "':'" + message + "'");
+            }
+        };
+        channel.basicConsume(queueName, true, consumer);
+    }
+}
+
+
+
+
+

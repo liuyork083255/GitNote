@@ -1,0 +1,76 @@
+首先准备一个生产者
+
+public class NewTask {
+    private static final String TASK_QUEUE_NAME="task_queue";
+    public static void main(String[] args) throws Exception {
+        ConnectionFactory factory=new ConnectionFactory();
+        factory.setHost("localhost");
+        Connection connection=factory.newConnection();
+        Channel channel=connection.createChannel();
+        channel.queueDeclare(TASK_QUEUE_NAME,false,false,true,null);
+        //分发信息
+        for (int i=0;i<10;i++){
+            String message="Hello RabbitMQ"+i;
+            channel.basicPublish("",TASK_QUEUE_NAME,
+                    MessageProperties.PERSISTENT_TEXT_PLAIN,message.getBytes());
+            System.out.println("NewTask send '"+message+"'");
+        }
+        channel.close();
+        connection.close();
+    }
+}
+
+
+然后是两个消费者 Work1 和 Work2 ，要模拟的是当其中一个失效了，生产者会把那条消息发给别的在线的消费者
+消费者
+
+public class Work1 {
+	private static final String TASK_QUEUE_NAME = "task_queue";
+    public static void main(String[] args) throws Exception {
+        final ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost("localhost");
+        Connection connection = factory.newConnection();
+        final Channel channel = connection.createChannel();
+
+        channel.queueDeclare(TASK_QUEUE_NAME,false,false,true,null);
+        System.out.println("Worker1  Waiting for messages");
+
+        //每次从队列获取的数量
+        channel.basicQos(1);
+
+        final Consumer consumer = new DefaultConsumer(channel){
+        	@Override
+        	public void handleDelivery(String consumerTag, Envelope envelope,
+        			BasicProperties properties, byte[] body) throws IOException {
+        		// TODO Auto-generated method stub
+        		String message = new String(body, "UTF-8");
+                System.out.println("Worker1  Received '" + message + "'");
+				
+				//如果执行这段代码，那么收到的这条消息在服务端不会删除的，而是会转发给另一个消费者
+                //channel.abort();
+				
+				//如果执行这段代码，那么说明这条消息已经确认收到了，服务器端会删除对应的这条消息
+                //channel.basicAck(envelope.getDeliveryTag(),false);
+				
+				//如果上面两条都没有执行，那么服务端会查询到对应的那一条消息没有被确认，但是不会转发给别的消费者
+				
+				
+        	}
+        };
+        boolean autoAck=false;
+        //消息消费完成确认
+		//以上的讨论必须建立在手动确认消息机制，也就是autoAck设置为false，如果为true，
+		//每次服务端自动就会只要发送信息给消费者就会从内存中删除，那么如果消费者程序异常退出，那么就无法获取数据，这条消息就无法恢复
+				如果设置false，那么必须手动来确认该条消息的反馈，也就是要么执行channel.abort();
+				或者执行channel.basicAck(envelope.getDeliveryTag(),false/true);
+        channel.basicConsume(TASK_QUEUE_NAME, autoAck, consumer);
+    }
+}
+
+
+
+
+
+
+
+
