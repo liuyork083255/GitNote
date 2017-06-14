@@ -1,0 +1,20 @@
+这里有一个坑：关于 <<-EOF 和 <<EOF
+
+就对下面这段代码说明：
+fileUp(){
+	tmp=/tmp/up.txt
+	dir=/upload
+	cat <<-EOF >$tmp
+	cd $dir
+	put supervisord.log supervisord.log 	
+	bye
+	EOF
+        lftp -u sgd_data,sgd_1234 -p 22 sftp://172.16.87.1<$tmp
+	rm -f $tmp
+}
+
+刚开始以为是格式的问题，最后发现是由于 <<-EOF 和 <<EOF 导致的，只要使用了 这个东西
+那么就要注意，
+	如果使用<<EOF，那么在结束的那一行符号EOF前必须是顶格写，中间不能有空格和 tab 符号，不然后面的所有的数据都认为是 要输入的内容，包括EOF也是内容的一部分
+	如果使用<<-EOF，那么在结束的那一行符号EOF前必须是 0-n个 Tab 符号，不能是别的符号，不然后面的所有的数据都认为是 要输入的内容，包括EOF也是内容的一部分
+

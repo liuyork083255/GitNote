@@ -28,9 +28,13 @@ spring.thymeleaf.cache=false
 注意：如果上面两个步骤都设置了都还出错，那么极有可能是html里面的格式不正确，因为使用了templates的html必须符合<></>规则，不要忘记了</>,及时是单元素标签
 
 
-
-
-
+如何要解决这个问题就可以在application.properties中增加spring.thymeleaf.mode=LEGACYHTML5，即声明thymeleaf使用非严格的html
+这个时候还不行，访问的话会报错，因为缺少依赖
+	<dependency>
+		<groupId>net.sourceforge.nekohtml</groupId>
+		<artifactId>nekohtml</artifactId>
+		<version>1.9.22</version>
+	</dependency>
 
 
 

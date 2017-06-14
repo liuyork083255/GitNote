@@ -1,0 +1,35 @@
+
+我们这里不讨论发普通的 key-value 字符串 类型，我们这里讨论发对象（json对象，或者是json对象的字符串）
+
+首先看后端有没有用 @RequestBody 修饰
+	有：
+		1 如果有，那么 ajax 里面就必须要有这个修饰：contentType:"application/json;charset=utf-8",
+			因为加上这个注解后，后端框架会读取参数的信息头
+		
+		2 其实是 ajax 发送的数据格式必须是字符串类型，不能直接发送 json 对象，可以使用 JSON.stringify() 转换
+	
+	没有：
+		1 如果没有，那么 ajax 里面就不能加 contentType:"application/json;charset=utf-8",
+	
+		2 并且发送的必须是 json 对象，而不能是 JSON.stringify() 修饰后的字符串
+	
+	
+
+
+ajax 里面本身就有一个 dataType，那是用来修饰后端返回数据的
+
+如果后端返回的普通字符串，那么 ajax 如果用 dataType: "json",是收不到数据的，如果用dataType: "text",才能收到数据
+
+如果后端返回的是经过@ResponseBody修饰的对象，
+	那么 ajax 用dataType: "json"修饰，则是收到的是一个json对象
+	如果 ajax 用dataType: "text"修饰，则是收到的json的字符串，不是对象
+	
+	
+还有一点注意：用ajax 请求，就不要考虑什么页面跳转了，肯定不会发生的，因为是局部刷新，
+	不管后端返回的是页面还是什么东西，都是被ajax捕获了，数据就是success:function(data) 的 data
+
+	除非在 ajax 里面模拟一个同步请求
+
+
+
+
