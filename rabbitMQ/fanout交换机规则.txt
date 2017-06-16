@@ -39,7 +39,7 @@ public class EmitLog {
         for (int i=0;i<5;i++){
             String message="Hello World"+i;
 			
-			//********注意：如果是 fanout 模式，第二个参数必须为空字符串，这样就不会路由，只要绑定到logs的交换机都会收到消息
+			//********注意：如果是 fanout 模式，第二个参数为空字符串，设置了也不会有效，只要绑定到logs的交换机都会收到消息
 				就算队列绑定了路由key ，也是无效的
             channel.basicPublish(EXCHANGE_NAME,"",null,message.getBytes());
             System.out.println("EmitLog Sent '" + message + "'");

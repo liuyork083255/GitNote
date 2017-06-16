@@ -1,0 +1,196 @@
+
+首先明白一点，栈堆溢出不是 Exception 子类，所以出现异常不能用这个关键字 catch 
+要捕获他们要用 Throwable 关键字捕获
+
+1 模拟 栈溢出：
+    private static int index = 1;
+ 
+    public void call(){
+        index++;
+        call();
+    }
+ 
+    public static void main(String[] args) {
+        StackErrorMock mock = new StackErrorMock();
+        try {
+            mock.call();
+        }catch (Throwable e){
+            System.out.println("Stack deep : "+index);
+            e.printStackTrace();
+        }
+    }
+
+
+
+2 本地方法Native 栈：
+	这部分主要与虚拟机用到的 Native 方法相关，一般情况下， Java 应用程序员并不需要关心这部分的内容。
+	
+
+3、PC 寄存器：
+　　PC 寄存器，也叫程序计数器。JVM支持多个线程同时运行，每个线程都有自己的程序计数器。
+	倘若当前执行的是 JVM 的方法，则该寄存器中保存当前执行指令的地址；倘若执行的是native 方法，则PC寄存器中为空。
+	也不用模拟。 主要是不晓得怎么模拟
+	
+4 堆溢出：
+	当申请不到空间时会抛出 OutOfMemoryError
+	代码：
+	public static void main(String[] args) {
+        List<byte[]> list = new ArrayList<byte[]>();
+        int i = 0;
+        boolean flag = true;
+        while (flag){
+            try {
+                i++;
+                list.add(new byte[1024 * 1024]);//每次增加一个1M大小的数组对象
+            }catch (Throwable e){
+                e.printStackTrace();
+                flag = false;
+                System.out.println("count="+i);//记录运行的次数
+            }
+        }
+    }
+	
+	使用前可以设置 堆得大小为 16M   -Xms16M -Xmx16M
+
+5 方法区（PermGen）：
+	着重讨论
+	方法区一般叫做永久代，当然只在 HotSpot 中才存在这个概念，方法区和“PermGen space”又有着本质的区别。前者是 JVM 的规范，而后者则是 JVM 规范的一种实现。
+	并且只有 HotSpot 才有 “PermGen space”，而对于其他类型的虚拟机，如 JRockit（Oracle）、J9（IBM） 并没有“PermGen space”。
+	
+	由于方法区主要存储类的相关信息，所以对于动态生成类的情况比较容易出现永久代的内存溢出。
+	最典型的场景就是，在 jsp 页面比较多的情况，容易出现永久代内存溢出。
+	
+	模拟代码:（思路是模拟建一个对象，然后通过URLClassLoader来加载此类）
+	新建一个类：
+	package com.paddx.test.memory;
+ 
+	public class Test {
+	}
+	
+	测试代码：
+	package com.paddx.test.memory;
+ 
+	import java.io.File;
+	import java.net.URL;
+	import java.net.URLClassLoader;
+	import java.util.ArrayList;
+	import java.util.List;
+	 
+	public class PermGenOomMock{
+		public static void main(String[] args) {
+			URL url = null;
+			List<ClassLoader> classLoaderList = new ArrayList<ClassLoader>();
+			try {
+				url = new File("/tmp").toURI().toURL();
+				URL[] urls = {url};
+				while (true){
+					ClassLoader loader = new URLClassLoader(urls);
+					classLoaderList.add(loader);
+					loader.loadClass("com.paddx.test.memory.Test");
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	但是注意：JDK1.6/1.7/1.8 各自运行出来的都是不同的结果
+	
+	在JDK1.8中已经没有了PermGen space 这个概念了，取而代之是一个叫做 Metaspace（元空间） 的东西
+	
+	其实，移除永久代的工作从JDK1.7就开始了。JDK1.7中，存储在永久代的部分数据就已经转移到了Java Heap或者是 Native Heap。
+	但永久代仍存在于JDK1.7中，并没完全移除，譬如符号引用(Symbols)转移到了native heap；字面量(interned strings)转移到了java heap；
+	类的静态变量(class statics)转移到了java heap。
+	
+	测试他们的区别：
+	代码：
+		package com.paddx.test.memory;
+		 
+		import java.util.ArrayList;
+		import java.util.List;
+		 
+		public class StringOomMock {
+			static String  base = "string";
+			public static void main(String[] args) {
+				List<String> list = new ArrayList<String>();
+				for (int i=0;i< Integer.MAX_VALUE;i++){
+					String str = base + base;
+					base = str;
+					list.add(str.intern());
+				}
+			}
+		}
+	
+	JDK 1.6下，会出现“PermGen Space”的内存溢出
+	而在 JDK 1.7和 JDK 1.8 中，会出现堆内存溢出，并且 JDK 1.8中 PermSize 和 MaxPermGen 已经无效。
+	因此，可以大致验证 JDK 1.7 和 1.8 将字符串常量由永久代转移到堆中，并且 JDK 1.8 中已经不存在永久代的结论。
+	
+	元空间的本质和永久代类似，都是对JVM规范中方法区的实现。不过元空间与永久代之间最大的区别在于：元空间并不在虚拟机中，
+	而是使用本地内存。因此，默认情况下，元空间的大小仅受本地内存限制，我们可以用 Jconsole 查看Metaspace，是没有大小上限的；
+	但是通过下面的测试则是可以设置大小的，然后再去Jconsole看下，发现有了最大值限制    格式：-XX:MetaspaceSize=16M -XX:MaxMetaspaceSize=16M
+	
+	
+	但可以通过以下参数来指定元空间的大小：
+		-XX:MetaspaceSize，初始空间大小，达到该值就会触发垃圾收集进行类型卸载，同时GC会对该值进行调整：
+			如果释放了大量的空间，就适当降低该值；如果释放了很少的空间，那么在不超过MaxMetaspaceSize时，适当提高该值。
+		-XX:MaxMetaspaceSize，最大空间，默认是没有限制的。
+	
+	除了上面两个指定大小的选项以外，还有两个与 GC 相关的属性：
+　　	-XX:MinMetaspaceFreeRatio，在GC之后，最小的Metaspace剩余空间容量的百分比，减少为分配空间所导致的垃圾收集
+　　	-XX:MaxMetaspaceFreeRatio，在GC之后，最大的Metaspace剩余空间容量的百分比，减少为释放空间所导致的垃圾收集
+	
+	
+	如果我们设置了 MaxPermSize ，那么就会出现元空间的溢出。java.lang.OutOfMemmoryError:Metaspace
+	
+	最后是 为什么 不要永久代了 ？
+	
+	　	1、字符串存在永久代中，容易出现性能问题和内存溢出。
+
+	　　2、类及方法的信息等比较难确定其大小，因此对于永久代的大小指定比较困难，太小容易出现永久代溢出，太大则容易导致老年代溢出。
+
+	　　3、永久代会为 GC 带来不必要的复杂度，并且回收效率偏低。
+
+	　　4、Oracle 可能会将HotSpot 与 JRockit 合二为一。
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

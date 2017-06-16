@@ -1,0 +1,82 @@
+参考链接：http://blog.csdn.net/yandaonan/article/details/50844806
+
+
+背景了解:
+	Jvm提供了一个参数-Xcomp，可以使jvm运行在纯编译模式下，所有方法在第一次被调用的时候就会被编译成机器代码。
+	加上这个参数之后，系统启动之后负载确实不会上升了，但是随之而来的问题是启动时间变得很长，是原来的2倍还多。
+	除了纯编译方式和默认的mixed之外，从jdk6u25开始引入了一种分层编译的方式。Hotspot jvm内置了2种编译器，
+	分别是client方式启动时用的C1编译器和server方式启动时用的C2编译器。C2编译器在将代码编译成机器码之前，
+	需要收集大量的统计信息以便在编译的时候做优化，因此编译后的代码执行效率也高，代价是程序启动速度慢*，
+	并且需要比较长的执行时间才能达到最高性能。相比之下，C1编译器的目标在于使程序尽快进入编译执行阶段，
+	因此编译前需要收集的统计信息比C2少很多，编译速度也快不少。代价是编译出的目标代码比C2编译的执行效率要低。
+	尽管如此，C1编译的执行效率也比解释执行有巨大的优势。分层编译方式是一种折衷方式，在系统启动之初执行频率比较高的代码将先被C1编译器编译，
+	以便尽快进入编译执行。随着时间推进，一些执行频率高的代码会被C2编译器再次编译，从而达到更高的性能。
+	
+	可以通过以下jvm参数开启分层编译模式：
+		-XX:+TieredCompilation
+	在jdk8中，当以server模式启动时，分层编译默认开启。
+	 jdk8中server模式默认采用分层编译方式，如果需要关闭分层编译，需要加上启动参数-XX:-TieredCompilation
+	
+	需要注意的是，分层编译方式只能用于server模式中，如果以client模式启动，-XX:+TieredCompilation参数将会被忽略
+	（前提是当前jvm版本和平台同时支持client和server模式，如果仅支持server模式的话，-client参数将会被忽略。）。
+	
+	
+
+	
+
+codeCache简介
+	Java代码在执行时一旦被编译器编译为机器码，下一次执行的时候就会直接执行编译后的代码，
+	也就是说，编译后的代码被缓存了起来。缓存编译后的机器码的内存区域就是codeCache。
+	这是一块独立于java堆之外的内存区域。除了jit编译的代码之外，java所使用的本地方法代码（JNI）也会存在codeCache中。
+	不同版本的jvm、不同的启动方式codeCache的默认大小也不同。
+	
+	
+codeCache满了会怎么样
+	在jdk1.7.0_4之前，你会在jvm的日志里看到这样的输出：
+		Java HotSpot(TM) 64-Bit Server VM warning: CodeCache is full. Compiler has been disabled.
+	Jit编译器被停止了，并且不会被重新启动。已经被编译过的代码仍然以编译方式执行，但是尚未被编译的代码就只能以解释方式执行了。
+
+	针对这种情况，jvm提供了一种比较激进的codeCache回收方式：Speculative flushing。在jdk1.7.0_4之后这种回收方式默认开启，
+	而之前的版本需要通过一个启动参数来开启：-XX:+UseCodeCacheFlushing。在Speculative flushing开启的情况下，
+	当codeCache将要耗尽时，最早被编译的一半方法将会被放到一个old列表中等待回收。在一定时间间隔内，如果方法没有被调用，这个方法就会被从codeCache充清除。
+
+	很不幸的是，在jdk1.7中，当codeCache耗尽时，Speculative flushing释放了一部分空间，但是从编译日志来看，jit编译并没有恢复正常，
+	并且系统整体性能下降很多，出现大量超时。在Oracle官网上看到这样一个bug：http://bugs.java.com/bugdatabase/view_bug.do?bug_id=8006952 
+	由于codeCache回收算法的问题，当codeCache满了之后会导致编译线程无法继续，并且消耗大量cpu导致系统运行变慢。Bug里影响版本是jdk8，
+	但是从网上其他地方的信息看，jdk7应该也存在相同的问题，并且没有被修复。
+
+
+codeCache调优
+	以client模式或者是分层编译模式运行的应用，由于需要编译的类更多（C1编译器编译阈值低，更容易达到编译标准），所以更容易耗尽codeCache。
+	当发现codeCache有不够用的迹象（通过上一节提到的监控方式）时，可以通过启动参数来调整codeCache的大小。
+		-XX:ReservedCodeCacheSize=256M
+
+	需要注意的是，这个codeCache的值不是越大越好。对于32位jvm，能够使用的最大内存空间为4g。这个4g的内存空间不仅包括了java堆内存，
+	还包括jvm本身占用的内存、程序中使用的native内存（比如directBuffer）以及codeCache。如果将codeCache设置的过大，
+	即使没有用到那么多，jvm也会为其保留这些内存空间，导致应用本身可以使用的内存减少。
+	对于64位jvm，由于内存空间足够大，codeCache设置的过大不会对应用产生明显影响。
+
+	在jdk8中，提供了一个启动参数XX:+PrintCodeCache在jvm停止的时候打印出codeCache的使用情况。其中max_used就是在整个运行过程中codeCache的最大使用量。
+	可以通过这个值来设置一个合理的codeCache大小，在保证应用正常运行的情况下减少内存使用。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
