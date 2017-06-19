@@ -1,0 +1,80 @@
+参考链接：http://blog.csdn.net/zhoufenqin/article/details/51012666
+
+ThreadPoolExecutor线程池实现类：
+	private final BlockingQueue<Runnable> workQueue;              // 阻塞队列  
+	private final ReentrantLock mainLock = new ReentrantLock();   // 互斥锁  
+	private final HashSet<Worker> workers = new HashSet<Worker>();// 线程集合.一个Worker对应一个线程  
+	private final Condition termination = mainLock.newCondition();// 终止条件  
+	private int largestPoolSize;           // 线程池中线程数量曾经达到过的最大值。  
+	private long completedTaskCount;       // 已完成任务数量  
+	private volatile ThreadFactory threadFactory;     // ThreadFactory对象，用于创建线程。  
+	private volatile RejectedExecutionHandler handler;// 拒绝策略的处理句柄  
+	private volatile long keepAliveTime;   // 线程池维护线程所允许的空闲时间  
+	private volatile boolean allowCoreThreadTimeOut;  
+	private volatile int corePoolSize;     // 线程池维护线程的最小数量，哪怕是空闲的  
+	private volatile int maximumPoolSize;  // 线程池维护的最大线程数量 
+
+
+重要规则：
+1> corePoolSize 与 maximumPoolSize ： 
+	由于 ThreadPoolExecutor 将根据 corePoolSize和 maximumPoolSize设置的边界自动调整池大小
+	当任务提交时：
+	（1）如果运行的线程少于 corePoolSize，则创建新线程来处理请求，即使其他辅助线程是空闲的； 
+　　（2）如果设置的corePoolSize 和 maximumPoolSize相同，则创建的线程池是大小固定的，如果运行的线程与corePoolSize相同，
+			当有新请求过来时，若workQueue未满，则将请求放入workQueue中，等待有空闲的线程去从workQueue中取任务并处理 
+　　（3）如果运行的线程多于 corePoolSize 而少于 maximumPoolSize，则仅当队列满时才创建新线程才创建新的线程去处理请求； 
+　　（4）如果运行的线程多于corePoolSize 并且等于maximumPoolSize，若队列已经满了，则通过handler所指定的策略来处理新请求； 
+　　（5）如果将 maximumPoolSize 设置为基本的无界值（如 Integer.MAX_VALUE），则允许池适应任意数量的并发任务 
+
+	　　也就是说，处理任务的优先级为： 
+	　　（1） 核心线程corePoolSize > 任务队列workQueue > 最大线程maximumPoolSize，如果三者都满了，使用handler处理被拒绝的任务。 
+	　　（2）当池中的线程数大于corePoolSize的时候，多余的线程会等待keepAliveTime长的时间，如果无请求可处理就自行销毁。 
+
+
+2> workQueue：
+	workQueue 线程池所使用的缓冲队列，该缓冲队列的长度决定了能够缓冲的最大数量，缓冲队列有三种通用策略： 
+
+
+3>ThreadFactory：
+	使用 ThreadFactory 创建新线程。如果没有另外说明，则在同一个 ThreadGroup 中一律使用 Executors.defaultThreadFactory() 创建线程，
+	并且这些线程具有相同的 NORM_PRIORITY 优先级和非守护进程状态。通过提供不同的 ThreadFactory，可以改变线程的名称、线程组、优先级、守护进程状态等等。
+	如果从 newThread 返回 null 时 ThreadFactory 未能创建线程，则执行程序将继续运行，但不能执行任何任务。
+
+
+
+4>RejectedExecutionHandler ：
+	当Executor已经关闭（即执行了executorService.shutdown()方法后），并且Executor将有限边界用于最大线程和工作队列容量，
+	且已经饱和时，在方法execute()中提交的新任务将被拒绝. 
+	这里提供了四种预定义的处理程序策略：（也就是线程数量和等待队列都满了以后，新提交的任务改如何处理的策略）
+	详解可以见原链接的 代码示例：
+	
+	
+	
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+

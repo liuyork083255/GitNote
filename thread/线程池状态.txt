@@ -1,0 +1,44 @@
+参考链接：http://blog.csdn.net/zhoufenqin/article/details/51012666
+
+ThreadPoolExecutor类中定义了一些与线程状态与活动线程数相关的一些变量
+	private final AtomicInteger ctl = new AtomicInteger(ctlOf(RUNNING, 0));  
+	// 将整型的24位分为高3位和低29位，高3位表示线程池的状态,低29位表示活动的线程数  
+	private static final int COUNT_BITS = Integer.SIZE - 3;  
+	private static final int CAPACITY   = (1 << COUNT_BITS) - 1;// 29位能表示的最大二进制整数，也就是活动线程数  
+
+	// 高3位数值代表的线程池状态  
+	private static final int RUNNING    = -1 << COUNT_BITS;    // running 线程池能接受新任务  
+	private static final int SHUTDOWN   =  0 << COUNT_BITS;    // shutdown 线程池不再接受新任务  
+	private static final int STOP       =  1 << COUNT_BITS;    // stop 线程池不再接受新任务，不再执行队列中的任务，而且要中断正在处理的任务  
+	private static final int TIDYING    =  2 << COUNT_BITS;    // tidying 线程池所有任务均已终止  
+	private static final int TERMINATED =  3 << COUNT_BITS;    // terminated terminated()方法执行结束  
+
+
+	RUNNING    -- 对应的高3位值是111
+	SHUTDOWN   -- 对应的高3位值是000
+	STOP       -- 对应的高3位值是001
+	TIDYING    -- 对应的高3位值是010
+	TERMINATED -- 对应的高3位值是011
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
