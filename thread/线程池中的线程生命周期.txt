@@ -1,0 +1,31 @@
+
+参考链接：http://www.cnblogs.com/pengineer/p/5011965.html
+
+默认情况下，线程池中的线程是不会销毁的，一直存在。
+如何要销毁可以使用：
+	//new  ThreadPoolExecutor(corePoolSize, maximumPoolSize, keepAliveTime, milliseconds,runnableTaskQueue, handler);
+	ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 6, 10, TimeUnit.SECONDS, queue);
+	也就是在10过后还是没有任务，那么就销毁线程池中的线程，并且线程池也停止了。
+	
+	注意：上面这样设置不会启动自动销毁，
+	
+	工作线程回收需要满足三个条件：
+		1)  参数allowCoreThreadTimeOut为true
+
+		2)  该线程在keepAliveTime时间内获取不到任务，即空闲这么长时间
+
+		3)  当前线程池大小 > 核心线程池大小corePoolSize。	
+
+
+	所以在ThreadPoolExecutor executor = new ThreadPoolExecutor(3, 6, 10, TimeUnit.SECONDS, queue);后面加上executor.allowCoreThreadTimeOut(true);就可以了
+		allowCoreThreadTimeOut 的设置需要在任务执行之前，一般在new一个线程池后设置；在allowCoreThreadTimeOut设置为true时，ThreadPoolExecutor的keepAliveTime参数必须大于0。
+
+
+
+还有一个方法就是 调用shutdown 或者 shutdownNow ，该方法会使得keepAliveTime参数失效。
+
+
+
+
+
+
