@@ -68,6 +68,8 @@ NIO（非阻塞）：
 		Reactor 线程：
 			他理解成一个 代理的客户端连接的处理的中转站，多路复用器Seletor就是在这个线程中
 
+			
+	JDK1.4提供了对非阻塞IO（NIO）的支持，使用的是Select/poll，JDK1.5_update10版本使用epoll替代了传统的select/poll，极大的提升了NIO通信的性能。
 
 
 AIO（异步）:
