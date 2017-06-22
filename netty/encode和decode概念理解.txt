@@ -1,0 +1,27 @@
+
+encode 编码：将对象转为字节
+decode 解码：将字节转为对象
+
+解码的常用的是 ByteToMessageDecoder  MessageToMessageDecoder
+	前者是用于将缓冲区中的字节转换成一个对象，一般都是设置在pipeline链中的第一个
+	后者是用于将消息到消息，是一个泛型，需要将原始的数据传入
+	
+
+编码的常用的是 MessageToByteEncoder  MessageToMessageEncoder
+	前者是用于将对象转换成一个字节数组，然后写入到缓冲区中，一般都是设置在pipeline链中的最后一个
+	后者是用于将消息到消息，是一个泛型，需要将原始的数据传入
+
+目前还不了解 MessageToMessageDecoder 和 MessageToMessageEncoder 的区别？
+	这里有一个链接：有空可以看看，不晓得能不能看出有什么不同不？
+	http://blog.csdn.net/zbw18297786698/article/details/53647065
+
+
+
+
+
+
+
+
+
+
+
