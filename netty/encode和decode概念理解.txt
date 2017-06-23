@@ -14,7 +14,10 @@ decode 解码：将字节转为对象
 目前还不了解 MessageToMessageDecoder 和 MessageToMessageEncoder 的区别？
 	这里有一个链接：有空可以看看，不晓得能不能看出有什么不同不？
 	http://blog.csdn.net/zbw18297786698/article/details/53647065
-
+	
+	注意：链中的 handler 都是有先后顺序的，如果是 读操作，会去执行 第一个handler中的所有跟读操作有关的方法，然后去执行第二个跟读操作有关的方法。
+	
+	注意：不管是 encode 还是 decode ，他们往后放行的操作都是 用List的out对象加入 转换后的msg，不加的话会被视为终止操作，后面的所有handler都不会操作
 
 
 
