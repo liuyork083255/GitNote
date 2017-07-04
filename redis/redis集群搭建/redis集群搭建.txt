@@ -151,6 +151,20 @@ http://bbs.csdn.net/topics/392055578?locationNum=10&fps=1
 
 
 
+注意：如果启动集群的时候出现：
+	[ERR] Node 172.168.63.202:7001 is not empty. Either the nodealready knows other nodes (check with CLUSTER NODES) or contains some key in database 0.
+	说明以前这个集群存在，并且没有正常关闭，重启的话需要删除这些历史数据
 
+解决方法：
+
+1)、将需要新增的节点下aof、rdb等本地备份文件删除；
+
+2)、同时将新Node的集群配置文件删除,即：删除你redis.conf里面cluster-config-file所在的文件；
+
+3)、再次添加新节点如果还是报错，则登录新Node,./redis-cli–h x –p对数据库进行清除：
+
+172.168.63.201:7001> flushdb #清空当前数据库
+
+通过以上解决方法中的1)、2)或者3)之后再执行脚本，成功执行；
 
 
