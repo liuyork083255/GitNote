@@ -1,4 +1,4 @@
-
+﻿
 1 	检查MYSQL 是否已安装
 		yum list installed | grep mysql
 
@@ -34,7 +34,7 @@
 			mysql>create user 'username'@'%' identified by 'password'; 
 
 6 查看端口
-	netstat -tunlp | grep （过滤）
+	netstat -tnlp | grep （过滤）
 
 
 mysql 的配置文件 /etc/my.cnf

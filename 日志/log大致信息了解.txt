@@ -85,3 +85,24 @@ slf4j绑定logback的用法：
 
 </configuration>
 
+
+有时候启动会报错，java.lang.NoSuchMethodError: ch.qos.logback.core.util.ContextUtil.addHostNameAsProperty()V
+	后来换了一个最新的 logback-classic jar 包就好了
+	代码里直接加 private static Logger logger =  LoggerFactory.getLogger(BILoginErrorController.class); 就可以使用了
+	需要注意的是：Logger 和 LoggerFactory 都是 slf4j 包里的
+	
+	
+	注意：如果是使用了 springboot 那么使用slf4j就是都不用导入，内部已经有了
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+

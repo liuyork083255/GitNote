@@ -23,3 +23,5 @@
           </dependency>
         </dependencies>
       </plugin>
+	  
+最后一步就是：这种热部署是依赖 mvn ，所以启动的时候必须是以 spring-boot:run 启动才可以    修改后 每次 Ctrl+Shift+F9 就可以了
