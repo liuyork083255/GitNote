@@ -1,0 +1,46 @@
+
+首先通过命令查看编码 ：SHOW VARIABLES LIKE 'character%'
+例如是乱码则会出现
+	character_set_client	| utf8 |
+	
+	character_set_connection | utf8 |
+
+	character_set_database | latin1 |
+
+	character_set_filesystem | binary|
+
+	character_set_results | utf8 |
+
+	character_set_server | latin1 |
+
+	character_set_system | utf8 |
+
+	character_sets_dir | /usr/share/mysql/charsets/
+
+
+其实可以通过sql修改，但是重启后无效
+
+所以找到mysql的配置文件，一般在 /etc/my.cnf
+
+三个地方都要设置：
+	[client]
+	default-character-set=utf8
+
+	[mysqld]
+	character-set-server=utf8
+
+	[mysql]
+	default-character-set=utf8
+	
+
+	
+	注意：mysqld这个字段
+	5.5.19版本和以后的是：	character-set-server
+	之前的版本是：		default-character-set
+
+
+
+
+
+
+

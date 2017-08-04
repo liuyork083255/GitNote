@@ -12,7 +12,43 @@ servlet filter listerner都是属于servlet范畴，而拦截器是另外一种
 例如：
 //@WebServlet(urlPatterns="/myServlet1/*", description="Servlet的说明")
 //@WebFilter(filterName="myFilter",urlPatterns="/*")
+		@WebFilter(filterName="myFilter",urlPatterns="/*")
+		public class MyFilter implements Filter {
+
+			@Override
+			public void destroy() {
+				System.out.println("过滤器销毁");
+			}
+
+			@Override
+			public void doFilter(ServletRequest request, ServletResponse response,
+					FilterChain chain) throws IOException, ServletException {
+				System.out.println("执行过滤操作");
+				chain.doFilter(request, response);
+			}
+
+			@Override
+			public void init(FilterConfig config) throws ServletException {
+				System.out.println("过滤器初始化");
+			}
+
+		}
 //@WebListener(要什么就实现那个接口 比如 HttpSessionListener ServletContextListener )
+		@WebListener
+		public class MyServletContextListener implements ServletContextListener {
+
+			@Override
+			public void contextInitialized(ServletContextEvent sce) {
+				System.out.println("ServletContex初始化");
+				System.out.println(sce.getServletContext().getServerInfo());
+			}
+
+			@Override
+			public void contextDestroyed(ServletContextEvent sce) {
+				System.out.println("ServletContex销毁");
+			}
+
+		}
 
 但是加了这个注解后并不会自动注入，因为这三个注解没有被扫描到
 所以需要在@SpirngBootApplication这里再加上一个注解
@@ -55,31 +91,5 @@ public class MyInterceptor2 implements HandlerInterceptor{}
 只要复合过滤器的过滤规则，过滤器都会拦截。
 最后说明下，我们上面用到的WebMvcConfigurerAdapter 并非只是注册添加拦截器使用，其顾名思义是做Web配置
 用的，它还可以有很多其他作用，可以加入别的很多Bean
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

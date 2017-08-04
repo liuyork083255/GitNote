@@ -1,0 +1,46 @@
+
+首先针对mysql讨论：
+	因为在别的数据库中是没有 在insert语句后面加上 on duplicate key 这个用法的；
+	
+	这里主要区分 replace into 和 insert ... on duplicate key 两种用法：
+	
+	在主键不冲突的情况下，他们是一样，都是执行插入
+	如果冲突：
+		replace into ：则会先删除原先的记录，然后插入新的记录，如果新的记录不全，那么别的字段会是默认值
+				并且如果是自增的id，那么这个改变会让id加2，因为执行了一句delete操作
+		
+		insert ... on duplicate key：则是判断主键，如果冲突，那么就会执行update操作，但是会保留原来没有变动值，表面看似是update操作。
+				并且如果是自增的id，那么这个改变会让id加2，因为执行了一句下来发现影响2行
+				
+				
+	而且主从中，replace into 会导致master和slave节点的自增id不一致问题
+
+	
+		
+
+		
+网上 有一个测试 结论：http://lib.csdn.net/article/mysql/5302
+	带自增ID，使用replace 容易死锁，不要使用replace into，效率接近。
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

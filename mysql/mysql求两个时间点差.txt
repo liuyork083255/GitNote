@@ -1,0 +1,10 @@
+
+SELECT TIMESTAMPDIFF(MONTH,'2009-10-01','2009-12-01'); 
+                              小             大
+MONTH可以是：
+SECOND 秒 
+MINUTE 分钟
+HOUR 时间
+DAY 天
+MONTH 月
+YEAR 年 

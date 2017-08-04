@@ -1,0 +1,11 @@
+
+导出数据：不用登陆mysql，在外面即可： 
+	mysqldump -uroot -p123456 dw_analysis src_message --where=" sendtime > '2017-05-00'" > /root/src_message_201705_201708.sql
+                                 数据库名     表名       条件                                  导出的地址
+								 
+								 
+导入数据，可以直接登陆数据库，
+	使用source /root/src_message_201705_201708.sql即可
+								 
+
+    
