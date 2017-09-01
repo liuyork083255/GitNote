@@ -17,6 +17,32 @@
 	SELECT * FROM INFORMATION_SCHEMA.INNODB_TRX （\G）; 
 	如果有长时间的锁，就可以 kill 对应的线程id，注意：列名是 trx_mysql_thread_id
 
+对于这个表查出来的字段说明：
 
+trx_id						InnoDB存储引擎内部唯一的事务ID
+trx_state					当前事务的状态： RUNNING, LOCK WAIT, ROLLING BACK or COMMITTING.
+trx_started					事务的开始时间
+trx_requested_lock_id		事务等待的锁的ID（如果事务状态不是LOCK WAIT，这个字段是NULL），详细的锁的信息可以连查INNODB_LOCKS表
+trx_wait_started			事务等待开始的时间 （如果事务状态不是LOCK WAIT，这个字段是NULL）
+trx_weight					事务的权重，反映了一个事务修改和锁住的行数。当发生死锁回滚的时候，优先选择该值最小的进行回滚
+trx_mysql_thread_id	Mysql	中的线程ID，show processlist显示的结果
+trx_query					事务运行的sql语句
+trx_operation_state			事务当操作的类型 如updating or deleting，starting index read等
+trx_tables_in_use			查询用到的表的数量
+trx_tables_locked			查询加行锁的表的数量
+trx_lock_structs			The number of locks reserved by the transaction
+trx_lock_memory_bytes		锁在内存占用的空间大小
+trx_rows_locked				事务锁住的行数（不是准确数字）
+trx_rows_modified			事务插入或者修改的行数
+trx_concurrency_tickets		A value indicating how much work the current transaction can do before being swapped out, as specified by the innodb_concurrency_ticketsoption.
+trx_isolation_level			隔离级别
+trx_unique_checks			唯一键检测 是否开启
+trx_foreign_key_checks		外键检测 是否开启
+trx_last_foreign_key_error	Detailed error message for last FK error, or NULL.
+trx_adaptive_hash_latched	Whether or not the adaptive hash index is locked by the current transaction. (Only a single transaction at a time can modify the adaptive hash index.)
+trx_adaptive_hash_timeout	Whether to relinquish the search latch immediately for the adaptive hash index, or reserve it across calls from MySQL. 
+								When there is no AHI contention, this value remains zero and statements reserve the latch until they finish. 
+								During times of contention, it counts down to zero, and statements release the latch immediately after each row lookup.
+ 
 
 
