@@ -1,0 +1,13 @@
+参考链接:http://blog.csdn.net/u014534986/article/details/70746352
+
+
+其实很简单就是在springboot启动类 @SpringBootApplication 上加上 @CrossOrigin(origins = "*")这个注解
+这就可以用ajax在任何域地方访问这个应用了
+
+@CrossOrigin(origins = "*")：表示任何的ajax请求都会进来，如果为了安全起见，可以用nginx代理，
+@CrossOrigin(origins = "这里就只配nginx所在的服务ip:port") 这样就可以了,别的ip过来ajax 仍然会被过滤掉
+
+
+
+
+
