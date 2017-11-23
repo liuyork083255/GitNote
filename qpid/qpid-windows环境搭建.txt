@@ -1,4 +1,4 @@
-首先去官网去下载 qpid-server ：http://www.apache.org/dyn/closer.lua/qpid/java/6.1.2/binaries/qpid-broker-6.1.2-bin.tar.gz
+首先去官网去下载 qpid-server ：http://www.apache.org/dyn/closer.lua/qpid/broker-j/7.0.0/binaries/apache-qpid-broker-j-7.0.0-bin.tar.gz
 
 下载后直接解压，然后进入bin目录有一个 qpid-server.bat windows 启动命令，直接双击就可以了
 

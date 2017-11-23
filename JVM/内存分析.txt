@@ -1,0 +1,68 @@
+首先是简单看看 堆内存各种对象的数量和大小
+	jmap -histo:live PID | head -n 30
+	
+然后可以导出hprof文件，使用MAT工具进行分析
+	jmap -dump:live,format=b,file=xxx.hprof PID
+
+	
+	
+	
+	
+总之，分析堆内存一般都是步骤为下：
+
+1、top命令：Linux命令。可以查看实时的内存使用情况。  
+
+2、jmap -histo:live [pid]，然后分析具体的对象数目和占用内存大小，从而定位代码。
+
+3、jmap -dump:format=b,file=xxx.xxx [pid]，然后利用MAT工具分析是否存在内存泄漏等等。
+
+
+当出现以下FULL GC的时候需要查看full的原因，手动引起最常见就是：
+	1 Full GC (Heap Dump Initiated GC)    执行了dump命令     比如上面的jmap -dump命令
+	2 Full GC (Heap Inspection Initiated GC) 执行了histo命令     比如上面的jmap -histo命令
+	3 Full GC (Ergonomics)   这里是由于JVM认为此刻是一次适合进行垃圾回收的时间
+
+	
+
+堆内存分配：	
+	JVM初始分配的内存由-Xms指定,默认是物理内存的1/64;JVM最大分配的内存由-Xmx指 定,默认是物理内存的1/4.
+默认空余堆内存小于40%时,JVM就会增大堆直到-Xmx的最大限制;空余堆内存大于70%时, JVM会减少堆直到-Xms的最小限制.
+因此服务器一般设置-Xms,-Xmx相等以避免在每次GC 后调整堆的大小.	
+
+非堆内存分配：
+	JVM使用-XX:PermSize设置非堆内存初始值,默认是物理内存的1/64;由XX:MaxPermSize设置最大非堆内存的大小,默认是物理内存的1/4.
+	
+	
+为什么一些程序频繁发生GC?有如下原因:  
+	l 程序内调用了System.gc()或Runtime.gc().  
+	l 一些中间件软件调用自己的GC方法,此时需要设置参数禁止这些GC. 
+	l Java的Heap太小,一般默认的Heap值都很小.  
+	l 频繁实例化对象,Release对象.此时尽量保存并重用对象,例如使用StringBuffer()和String().  
+	
+	如果你发现每次GC后,Heap的剩余空间会是总空间的50%,这表示你的Heap处于健康状态.许多Server端的Java程序每次GC后最好能有65%的剩余空间.
+	经验之谈: 
+		1．Server端JVM最好将-Xms和-Xmx设为相同值.为了优化GC,最好让-Xmn值约等于-Xmx的1/3[2].  
+		2．一个GUI程序最好是每10到20秒间运行一次GC,每次在半秒之内完成
+	
+	
+注意:  
+	1．增加Heap的大小虽然会降低GC的频率,但也增加了每次GC的时间.并且GC运行时,所有的用户线程将暂停,也就是GC期间,Java应用程序不做任何工作. 
+	2．Heap大小并不决定进程的内存使用量.进程的内存使用量要大于-Xmx定义的值,因为Java为其他任务分配内存,例如每个线程的Stack等.
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	

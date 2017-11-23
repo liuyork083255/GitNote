@@ -1,0 +1,15 @@
+参考链接：http://blog.csdn.net/g__hk/article/details/50137055
+	Redis 2.0增加了VM特性。让Redis数据容量突破了物理内存的限制。并实现了数据冷热分离。
+
+但是目前好点淘汰了，比较新的策略是 Redis diskstore  
+
+
+
+
+
+
+
+
+
+
+

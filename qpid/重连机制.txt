@@ -1,0 +1,26 @@
+程序配置设置重连机制是在 url 里面设置的
+只要里面加了  retries=‘10’ 类似的就可以重连
+
+例如 amqp://guest:guest@clientid/default?failover='roundrobin?cyclecount='1440''&brokerlist='tcp://x.x.x.x:5672?tcp_nodelay='true'&connectdelay='3000'&retries='20''
+
+字段解析
+	guest:guest 用户名和密码，这个可以从web页面看到
+	default 虚拟主机  这个也可以在web页面看到
+	failover='roundrobin?cyclecount='1440''     这里是配置有几个broker，可以是多个  例如
+																								* amqp://guest:guest@clientid/test?brokerlist='
+																								*   tcp://localhost:5672?connectdelay='2000'&retries='3';
+																								*   tcp://localhost:5671?connectdelay='2000'&retries='3';
+																								*   tcp://localhost:5673?connectdelay='2000'&retries='3''
+																								*   &failover='roundrobin?cyclecount='30''
+																								*/
+											注意：failover='singlebroker?cyclecount='3''  这个时候是singlebroker，则后面重连次数是不会乘于retries次数，也就是cyclecount='3'配置是无效的
+											但是如果是failover='roundrobin?cyclecount='1440''  这个时候cyclecount的次数就会乘于后面的retries值
+	brokerlist='tcp://x.x.x.x:5672   这里可以是多个broker，用;分隔
+	connectdelay        每次重连的间隔时间   默认是0.5秒的样子
+	retries   这个是重连的必须配置的 
+	
+至于qpid.topic配置到时没有特别限制
+比如   
+qpid.topic=stock.incremental.cdh;{create:always,delete:always,node:{type:topic,x-declare:{type:fanout,auto-delete:True}}}
+qpid.topic=BURL:fanout://stock.incremental//123456789#stock.incremental?durable='false'&autodelete='true'
+都是可以的

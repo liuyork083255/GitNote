@@ -1,0 +1,5 @@
+参考链接：https://my.oschina.net/OutOfMemory/blog/805427?from=20161218
+
+
+
+需要注意的是，一般数据量很大才会压缩，数据量越小压缩越没有必要
