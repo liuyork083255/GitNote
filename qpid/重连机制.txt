@@ -24,3 +24,7 @@
 qpid.topic=stock.incremental.cdh;{create:always,delete:always,node:{type:topic,x-declare:{type:fanout,auto-delete:True}}}
 qpid.topic=BURL:fanout://stock.incremental//123456789#stock.incremental?durable='false'&autodelete='true'
 都是可以的
+
+
+如果连接了是多个borker，那么效果是只会连接一个broker，如果挂了，然后就会尝试本次连接此时，仍然失败后就会跳转下一个broker（注意：每个broker都可以设置自己的单循环次数，即retries='3'）
+如果所有遍历 即：cyclecount*retries 都没有连接成功，那么就会放弃连接
