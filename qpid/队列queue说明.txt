@@ -1,0 +1,10 @@
+
+以往用的queue字段都是 "stock.incremental.cdh;{create:always,delete:always,node:{type:topic,x-declare:{type:fanout,auto-delete:True}}}"
+	这种方式不管怎么测试下来，重要连接一断开，server端的exchange和queue都会自动断开
+	
+以后都使用这种方式：
+	BURL:fanout://stock.incremental.cdh//stock.incremental.cdh.queue?durable='false'&autodelete='false'
+	                  exchangeName               queueName               queue属性
+	这种方式连接断开之后exchange依然还在，queue则是依赖autodelete配置
+	
+	注意：这种方式是java版本

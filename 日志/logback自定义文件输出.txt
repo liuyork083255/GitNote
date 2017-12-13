@@ -1,0 +1,30 @@
+参考链接:https://www.cnblogs.com/cb0327/p/5759441.html
+
+1 在logback 配置文件中添加节点：
+	 <logger name="monitor" level="INFO">       //这里的level可以使用别的级别，然后就可以输入了，估计是使用.info以及级别要高的才会输出到指定的文件吧
+			<appender-ref ref="file—monitor"/>  
+		  </logger>   
+	
+	 <!-- 时间滚动输出 level为 monitor 日志 -->
+		<appender name="file—monitor"
+			class="ch.qos.logback.core.rolling.RollingFileAppender">
+			<filter class="ch.qos.logback.classic.filter.LevelFilter">
+				<level>INFO</level>
+				<onMatch>ACCEPT</onMatch>
+				<onMismatch>DENY</onMismatch>
+			</filter>
+			<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+				<FileNamePattern>D:/logs/monitor.%d{yyyy-MM-dd}.log</FileNamePattern>
+				<MaxHistory>30</MaxHistory>
+			</rollingPolicy>
+			<encoder>
+				<pattern>%date [%thread] %-5level %logger{80} - %msg%n</pattern>
+			</encoder>
+		</appender>
+
+2 然后在程序中直接使用
+	Logger monitorLogger = LoggerFactory.getLogger("monitor"); //  这个里面的字符串要和配置文件中的logger标签的name字段值保持一致，好像必须是包名或者是类名
+	monitorLogger.info   error   warn  等等，就可以输出到指定指定的文件了
+	
+	
+链接中有很多的解释说明 案例，可以参考
