@@ -1,0 +1,31 @@
+参考 http://blog.csdn.net/z69183787/article/details/52980361
+
+这个类其实就是多了一个指定的类型，比如收到数据，转成自己的类型后，比如这个类型是AModel，那么我们后面的handler就直接使用这个类型，不用再转换了
+源码：
+	protected abstract void messageReceived(ChannelHandlerContext ctx, I msg) throws Exception;（注意，原来版本这个方法是channelRead0）
+	
+	这个类其实还是调用了channelRead，只不过做了一个强转
+	    @Override
+		public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+			boolean release = true;
+			try {
+				if (acceptInboundMessage(msg)) {    判断类型
+					@SuppressWarnings("unchecked")
+					I imsg = (I) msg;
+					messageReceived(ctx, imsg);     这里就调用了我们需要实现的方法messageReceived
+				} else {
+					release = false;
+					ctx.fireChannelRead(msg);       这里直接跳过
+				}
+			} finally {
+				if (autoRelease && release) {
+					ReferenceCountUtil.release(msg);
+				}
+			}
+		}
+	所以我们在继承这个类的时候，需要指明一个类型，比如AModel
+	一般我们和一个编码器结合，编码器先执行，将二进制转成AModel，然后后面的handler直接强转成AModel
+		注意：如果强转不成功不会报错，而是直接跳过当前的handler，直接执行下一个handler
+	
+	
+	
