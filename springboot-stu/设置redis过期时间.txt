@@ -1,0 +1,27 @@
+参考链接：http://blog.csdn.net/yyoc97/article/details/78195609?locationNum=10&fps=1
+
+
+@Configuration
+//@EnableRedisHttpSession(maxInactiveIntervalInSeconds = 3600 * 12)
+@EnableCaching
+public class RedisAutoConfig extends CachingConfigurerSupport {
+
+    @Bean
+    public CacheManager cacheManager(RedisTemplate redisTemplate) {
+        RedisCacheManager rcm = new RedisCacheManager(redisTemplate);
+        //设置缓存过期时间
+        Map<String, Long> expires = new HashMap<>();
+        expires.put("12h",3600 * 12L);
+        expires.put("1h",3600 * 1L);
+        expires.put("10m",60 * 5L);
+        rcm.setExpires(expires);
+//        rcm.setDefaultExpiration(60 * 60 * 12);//秒
+        return rcm;
+    }
+这样就设置好了几个过期时间，使用如下：
+
+@Cacheable(value = "12h", keyGenerator = "keyGenerator")  // 这里的12h就是可以，当然可以自定义命名，后面的是一个key生成策略
+public PagingResultDTO<YearlySalesDto> queryYearlySales(@RequestBody SalesOrderQuery query) {
+    PageHelper.startPage(query.getPageNum(), query.getPageSize());
+    return MybatisPaginationUtil.paginationResult(salesOrderDao.queryYearlySales(query));
+}

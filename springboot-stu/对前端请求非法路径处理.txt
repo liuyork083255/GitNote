@@ -1,0 +1,43 @@
+首先前端请求非法路径有两种情况：
+	1 springboot的配置server.servlet-path路径
+	2 springboot的配置server.servlet-path前缀路径
+
+server.servlet-path其实是项目前缀，也就是如果配置server.servlet-path=/app/，
+	那么项目里面所有的controller路径都要加上这个前缀，如果这个时候时候给出的路径是/app/***的非法路径，
+	也就是前缀是保持一致的，后面是非法不存在的，那么这种异常可以通过@ControllerAdvice或者@RestControllerAdvice的
+		@ExceptionHandler(value = NoHandlerFoundException.class)捕获
+	但是如果在第一层/app这里就错了，比如是/apb/**，那么这种异常是不会被@RestControllerAdvice捕获的，
+这种情况就需要重新写一个类实现ErrorController接口：
+@RestController
+public class ErrorRequestController implements ErrorController{
+    private static final String PATH = "/error";
+    @Override
+    public String getErrorPath() {
+        return PATH;
+    }
+	
+    @RequestMapping(value = PATH)
+    public ResponseMessage error() {           // 这是我们处理的地方，上面几行代码固定不变
+        System.out.println("cache error");
+        return new ResponseMessage(500,"error",null);
+    }
+}
+
+
+当然，如果我们不使用server.servlet-path来设置，但是需要维护一个统一的请求前缀，那么我们可以通过
+server.servlet.path.prefix=/app/
+然后在springboot启动类加上
+@SpringBootApplication
+@RequestMapping("${server.servlet.path.prefix}")
+	就可以不用再写一个类来处理了
+
+
+如果想让springboot对不存在的url抛出异常，还必须要配置：
+spring.mvc.throw-exception-if-no-handler-found=true
+spring.resources.add-mappings=false
+
+
+	
+ErrorController其实就是针对SpringMvc错误的Mapping进行处理的，由于springmvc在发起http请求的时候，
+	后台没有找到相应的RequestHandleMapping,springBoot默认返回一个错误的页面，而这个页面就是error，所以
+	我们这里进行了更改替换，返回成一个json对象

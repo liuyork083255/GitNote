@@ -1,0 +1,57 @@
+参考链接：http://www.cnblogs.com/rainy-shurun/p/5213086.html
+1 这点也不叫坑，但是需要知道：Netty 4的线程模型转变
+	在Netty 3的时候，upstream是在IO线程里执行的，而downstream是在业务线程里执行的。比如netty从网络读取一个包传递给你的handler的时候，
+	你的handler部分的代码是执行在IO线程里，而你的业务线程调用write向网络写出一些东西的时候，你的handler是执行在业务线程里。
+	而Netty 4修改了这一模型。在Netty 4里inbound(upstream)和outbound(downstream)都是执行在EventLoop(IO线程)里。
+	也就是你如果在业务线程里通过channel.write向网络写出一些东西的时候，在某一点，netty 4会往这个channel的EventLoop里提交一个写出的任务。
+	那也就是业务线程和IO线程是异步执行的。
+	导致问题：
+		User user = new User();
+		user.setName(“admin”);
+		channel.write(user);	//这里由于是异步操作，其实并没有真正的写出，所以下面又一次赋值，user的name等于guest了
+		user.setName(“guest”);
+
+2 连接超时
+	在网络应用中，超时往往是最后一道防线，或是最后一根稻草。我们不怕干脆利索的宕机，怕就怕要死不活。当碰到要死不活的应用的时候往往就是依靠超时了。
+
+	在使用Netty编写客户端的时候，我们一般会有类似这样的代码：
+	bootstrap.connect(address).await(1000, TimeUnit.MILLISECONDS)
+
+	向对端发起一个连接，超时等待1秒钟。如果1秒钟没有连接上则重连或者做其他处理。而其实在bootstrap的选项里，还有这样的一项：
+	bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 3000);
+
+	如果这两个值设置的不一致，在await的时候较短，而option里设置的较长就出问题了。这个时候你会发现connect里已经超时了，你以为连接失败了，
+	但实际上await超时Netty并不会帮你取消正在连接的链接。这个时候如果第2秒的时候连上了对端服务器，那么你刚才的判断就失误了。
+	如果你根据connect(address).await(1000, TimeUnit.MILLISECONDS)来决定是否重连，很有可能你就建立了两个连接，
+	而且很有可能你的handler就在这两个channel里共享起来了，这就有可能让你产生：哎呀，Netty的handler不是在单线程里执行的这样的假象。
+	所以我的建议是，不要在await上设置超时，而总是使用option上的选项来设置。这个更准确些，超时了就是真的表示没有连上。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

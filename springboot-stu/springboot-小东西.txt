@@ -1,0 +1,8 @@
+1 更换页面的 logo
+	在static目录的images目录（也可以放在static下的其他目录）下添加名字为favicon.ico的图标，然后在每个页面添加如下代码，引入即可
+	 <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+
+
+
+
+

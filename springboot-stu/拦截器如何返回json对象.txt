@@ -1,0 +1,15 @@
+其实很简单，如果拦截器拦截了请求，并且直接返回json对象
+
+    @Override
+    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object o) throws Exception {
+        response.setHeader("Content-type", "text/json;charset=UTF-8");            // 这里很关键，text/json，如果返回字符串则改为text/html即可
+        Object userSession = request.getSession().getAttribute("userSession");
+        if(userSession == null){
+            ResponseMessage message = new ResponseMessage(300, "被拦截", null);
+            response.getWriter().print(JSON.toJSONString(message));            // 注意：这里已经返回，所以这里必须返回false，因为这个请求已经被响应了，不能放行
+            return false;
+        }
+        return true;
+    }
+
+

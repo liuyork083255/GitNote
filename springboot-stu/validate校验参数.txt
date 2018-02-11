@@ -1,0 +1,85 @@
+
+springboot中使用的validate是hibernate提供的
+1 使用就是在参数如果不是对象，而是基本对象，比如直接在参数前面加上@NonNull等字段
+2 如果使用在一个对象上，那么在这个对象的属性需要加上类似@NotNull等字段
+
+
+注意：加上校验字段是不能启动校验的，必须还要启动，并且两种启动方式不同
+	1 基本类型：启动的方式是在当前类上加上注解：@Validated
+	2 object类型：直接在参数前面加上@Valid即可
+	
+检验字段说明：
+@NotNull 和 @NotEmpty  和@NotBlank 区别
+@NotEmpty 用在集合类上面    集合对象的元素不为0，即集合不为空，也可以用于字符串不为null
+@NotBlank 用在String上面     只能用于字符串不为null，并且字符串trim()以后length要大于0
+@NotNull    用在基本类型上    任何对象的value不能为null
+	否则会报错
+
+
+	
+限制	说明
+@Null	限制只能为null
+@NotNull	限制必须不为null
+@AssertFalse	限制必须为false
+@AssertTrue	限制必须为true
+@DecimalMax(value)	限制必须为一个不大于指定值的数字
+@DecimalMin(value)	限制必须为一个不小于指定值的数字
+@Digits(integer,fraction)	限制必须为一个小数，且整数部分的位数不能超过integer，小数部分的位数不能超过fraction
+@Future	限制必须是一个将来的日期
+@Max(value)	限制必须为一个不大于指定值的数字
+@Min(value)	限制必须为一个不小于指定值的数字
+@Past	限制必须是一个过去的日期
+@Pattern(value)	限制必须符合指定的正则表达式
+@Size(max,min)	限制字符长度必须在min到max之间
+@Past	验证注解的元素值（日期类型）比当前时间早
+@NotEmpty	验证注解的元素值不为null且不为空（字符串长度不为0、集合大小不为0）
+@NotBlank	验证注解的元素值不为空（不为null、去除首位空格后长度为0），不同于@NotEmpty，@NotBlank只应用于字符串且在比较时会去除字符串的空格
+@Email	验证注解的元素值是Email，也可以通过正则表达式和flag指定自定义的email格式
+	
+	
+
+
+2. Hibernate Validator 附加的 constraint
+
+注解	作用
+@Email	被注释的元素必须是电子邮箱地址
+@Length(min=, max=)	被注释的字符串的大小必须在指定的范围内
+@NotEmpty	被注释的字符串的必须非空
+@Range(min=, max=)	被注释的元素必须在合适的范围内
+@NotBlank	被注释的字符串的必须非空
+@URL(protocol=,
+host=,    port=, 
+regexp=, flags=)	被注释的字符串必须是一个有效的url
+@CreditCardNumber
+被注释的字符串必须通过Luhn校验算法，
+银行卡，信用卡等号码一般都用Luhn
+计算合法性
+@ScriptAssert
+(lang=, script=, alias=)	要有Java Scripting API 即JSR 223 
+("Scripting for the JavaTM Platform")的实现
+@SafeHtml
+(whitelistType=, 
+additionalTags=)	classpath中要有jsoup包
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

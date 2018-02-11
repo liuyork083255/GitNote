@@ -1,0 +1,27 @@
+参考链接：http://www.linkedkeeper.com/detail/blog.action?bid=1027
+
+首先是知道：
+	Netty声明，不要在IO线程中调用sync()、await()等相关阻塞的方法，这可能会带来死锁问题。
+	我们上述所介绍的各种ChannelHandler都会在Netty IO线程中调用，所以不要在channelRead、write方法中调用Future的阻塞方法；
+	Netty推荐使用addListener这种异步的方式来解决。
+	如果业务上非要异步操作（比如必须发送出去后才打印log）
+	这种需求就可以使用监听器：
+		future.addListener(new ChannelFutureListener() {  
+			@Override  
+			public void operationComplete(ChannelFuture future) throws Exception {  
+				//  
+			}  
+		});  
+
+
+
+wait()、notify()实现的是线程间的协作，也就是一个线程进入休眠状态，那么需要另一个线程来唤醒自己，而不是自己唤醒自己，
+如果在handler中调用await，那么就会当前线程就会休眠，需要另一个线程唤醒自己，如果这个时候executor线程池派遣的线程刚好就是这个休眠的线程，
+那么就发生死锁了。
+那为什么我们启动netty server的时候调用sync没有抛出异常呢？
+	因为我们启动netty是在main方法里面，也就是启动的这个线程不是eventLoop线程，所以肯定不会是同一个线程
+
+
+		
+
+		
