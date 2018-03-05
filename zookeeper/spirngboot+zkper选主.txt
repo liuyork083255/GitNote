@@ -1,0 +1,72 @@
+场景：根据多个实例只让一个实例处于工作状态，可以利用zk的功能来实现
+
+pom依赖
+1 
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>Dalston.SR4</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+	这段必须加上
+	
+2 
+		<dependency>
+			<groupId>org.springframework.cloud</groupId>
+			<artifactId>spring-cloud-starter-zookeeper</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.integration</groupId>
+			<artifactId>spring-integration-zookeeper</artifactId>
+		</dependency>
+
+配置文件
+spring.cloud.zookeeper.connect-string=localhost:2181
+
+bean依赖
+	@Bean
+	public LeaderInitiator leaderInitiator(CuratorFramework curatorFramework, Candidate candidate) {
+		String namespace = "/leaderT/liu.york";
+		LeaderInitiator initiator = new LeaderInitiator(curatorFramework, candidate, namespace);
+		initiator.setLeaderEventPublisher(new DefaultLeaderEventPublisher());
+		return initiator;
+	}
+
+选主类
+@Component
+public class LeaderUtil extends DefaultCandidate {    //继承这个类即可完成对zk的选主绑定
+    private volatile boolean isLeader;
+
+    public boolean isLeader() {
+        return isLeader;
+    }
+
+    @Override
+    public void onGranted(Context ctx) {      //如果这个节点被选中，则这个方法执行
+        super.onGranted(ctx);
+        isLeader = true;
+    }
+
+    @Override
+    public void onRevoked(Context ctx) {       //如果这个节点被撤销，则这个方法执行
+        super.onRevoked(ctx);
+        isLeader = false;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+

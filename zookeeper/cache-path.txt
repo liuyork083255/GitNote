@@ -1,0 +1,64 @@
+ZooKeeper的用法： 缓存
+	可以利用ZooKeeper在集群的各个节点之间缓存数据。 每个节点都可以得到最新的缓存的数据。 
+	Curator提供了三种类型的缓存方式：Path Cache,Node Cache 和Tree Cache。
+
+Path Cache
+	Path Cache用来监控一个ZNode的子节点. 当一个子节点增加， 更新，删除时， Path Cache会改变它的状态， 会包含最新的子节点， 子节点的数据和状态。
+	注意：这里一定要知道监控的是子节点的path
+	比如监控/server1/cache/node1
+	1 如果/server1/cache/+node2 => /server1/cache/node2 跟node1无关，不会被监听
+	2 /server1/cache/node1 + son1 => /server1/cache/node1/son1 那么就属于node1的子节点了，会被监听
+	3 /server1/cache/node1/son1 + grandSon1 => /server1/cache/node1/son1/granSon1 就属于son1下的子节点变化了，跟node1子节点无关，不会被监听
+
+首先创建client：
+	PathChildrenCache cache = new PathChildrenCache(client, "/example/pathCache", true);//注意：这个监控路径开头也是根据client的命名空间，默认是/
+    cache.start();       //想使用cache，必须调用它的start方法，不用之后调用close方法
+
+然后创建监听：
+	PathChildrenCacheListener cacheListener = (client1, event) -> {
+		System.out.println("事件类型：" + event.getType());
+		if (null != event.getData()) {
+			System.out.println("节点数据：" + event.getData().getPath() + " = " + new String(event.getData().getData()));
+		}
+	};
+
+最后则是将监听器加入到cache中：	
+	cache.getListenable().addListener(cacheListener);
+
+
+测试则是直接对监控的子节点增删改
+	client.create().creatingParentsIfNeeded().forPath("/example/pathCache/test01", "01".getBytes());
+	client.setData().forPath("/example/pathCache/test01", "01_V2".getBytes());
+	client.delete().forPath("/example/pathCache/test01");
+
+当然时时刻刻都可以获取监控节点的最新情况
+	for (ChildData data : cache.getCurrentData()) {
+		System.out.println(data.getPath() + " = " + new String(data.getData()));
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
