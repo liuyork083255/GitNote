@@ -1,0 +1,260 @@
+1:StringBuffer(掌握)
+	(1)用字符串做拼接，比较耗时并且也耗内存，而这种拼接操作又是比较常见的，为了解决这个问题，Java就提供了
+	   一个字符串缓冲区类。StringBuffer供我们使用。-----------------在长度上和内容上都可以变
+	(2)StringBuffer的构造方法
+		A:StringBuffer()------------容量默认16
+		B:StringBuffer(int size)------------指定容量的字符串缓冲区对象，容量是给定值
+		C:StringBuffer(String str)-------------指定字符串内容的字符串缓冲区对象，容量是16+str.length 
+
+---------------------------------------------------------------
+stirngbuffer的方法：
+public int capacity（）返回当前容量，理论值
+public int length（）  返回字符的长度，实际值
+---------------------------------------------------------------
+
+
+	(3)StringBuffer的常见功能(自己补齐方法的声明和方法的解释)
+		A:添加功能
+--------------------------------------------------------------------------
+注意：
+StringBuffer sb = "fdsfs";--------------------------------这是错误的，字符串缓冲区不能这样赋值。
+StringBuffer sb = new StringBuffer();--------------这是开辟了一个字符串缓冲区
+sb.append("dfsfsa");-------------------注意：这个方法执行后返回的是字符串缓冲区本身对象，而不是返回字符串
+                      ----------所以这样就可以链式编程了
+				同时注意：String没有这个append方法
+
+public StringBuffer insert(int offset，String str)-------------------在指定位置吧任意类型数据插入到指定字符串缓冲区位置，并返回字符串缓冲区本身
+----------------------------------------------------------------------------
+
+		B:删除功能
+----------------------------------------------------------------------------
+public StringBuffer deleteCharAt(int index):删除执行位置的字符，并返回本身
+public StringBuffer delete(int start,int end):删除从指定位置开始，指定位置结束的内容，并返回本身    包左不包右
+----------------------------------------------------------------------------
+
+		C:替换功能
+----------------------------------------------------------------------------
+public StringBuffer replace(int start,int end,String str) 从start开始到end用str替换
+----------------------------------------------------------------------------
+
+		D:反转功能
+----------------------------------------------------------------------------
+public StringBuffer reverse() 反转字符串
+----------------------------------------------------------------------------
+
+		E:截取功能(注意这个返回值)
+----------------------------------------------------------------------------
+public String substring(int start)          注意这两个截取方法的返回值都是字符串类型，而不是字符串缓冲区本身
+public String substring(int start,int end)
+----------------------------------------------------------------------------
+
+	(4)StringBuffer的练习(做一遍)
+		A:String和StringBuffer相互转换
+			String -- StringBuffer
+				构造方法
+				还有一个就是利用append方法，将“”放入参数中，返回的是字符串缓冲区
+			StringBuffer -- String----------------方式一还是可以利用构造方法
+				toString()方法------------这个是方式二，常用的就是这个
+		B:字符串的拼接
+                          --------------------用StringBuffer做拼接，因为String做拼接每一次都要分配一个新空间
+		C:把字符串反转
+		D:判断一个字符串是否对称
+
+			--------------注意：StringBuffer没有重写equals方法，所以比较的是地址值
+
+	(5)面试题
+		小细节：
+			StringBuffer：同步的，数据安全，效率低。
+			StringBuilder：不同步的，数据不安全，效率高。---------------由于不安全，所以是在单线程中使用，很普遍
+				------------------------他们的两个的方法全部一样。
+
+		A:String,StringBuffer,StringBuilder的区别
+                     -----String长度内容是不可变的，后两个是可变的
+		     -----后两者中，buffer是同步安全的，builder是异步不安全
+
+		B:StringBuffer和数组的区别?
+                     ------二者都可以看做容器，但是StringBuffer数据最终是字符串数据，而数组是放置的任意类型，但必须是同一种
+	(6)注意的问题：
+		String作为形式参数，StringBuffer作为形式参数。
+		---------字符串看做是特殊的引用类型，在将其作为形式参数的时候，视为常量值，所以是不影响的
+		---------而StringBuffer则会改变，
+			但是注意：
+			private static void change(StringBuffer sb1) {
+				sb1 = new StringBuffer("world");--------------在main中，sb1其实没有改变，因为这里并不是改变的
+									      sb1中的堆中数据，而是改变其栈中数据，这其实类似是基本类型
+									      一个道理，栈中改变并不影响main中原来的数据
+
+这个其实很好这么理解：不管什么类型栈中的信息都不会改变，
+对于基本类型，栈中的数据就是它的值
+对于引用类型，栈中的数据就是它的地址
+所以如果我们改变的是这两种，都不会发生影响，但是如果改变引用执行堆中的数据，才会改变
+ 
+			}
+	
+2:数组高级以及Arrays(掌握)
+	(1)排序
+		A:冒泡排序
+			相邻元素两两比较，大的往后放，第一次完毕，最大值出现在了最大索引处。同理，其他的元素就可以排好。
+			
+			public static void bubbleSort(int[] arr) {
+				for(int x=0; x<arr.length-1; x++) {
+					for(int y=0; y<arr.length-1-x; y++) {
+						if(arr[y] > arr[y+1]) {
+							int temp = arr[y];
+							arr[y] = arr[y+1];
+							arr[y+1] = temp;
+						}
+					}
+				}
+			}
+			
+		B:选择排序
+			把0索引的元素，和索引1以后的元素都进行比较，第一次完毕，最小值出现在了0索引。同理，其他的元素就可以排好。
+			
+			public static void selectSort(int[] arr) {
+				for(int x=0; x<arr.length-1; x++) {
+					for(int y=x+1; y<arr.length; y++) {
+						if(arr[y] < arr[x]) {
+							int temp = arr[x];
+							arr[x] = arr[y];
+							arr[y] = temp;
+						}
+					}
+				}
+			}
+	(2)查找
+		A:基本查找
+			针对数组无序的情况
+			
+			public static int getIndex(int[] arr,int value) {
+				int index = -1;
+				
+				for(int x=0; x<arr.length; x++) {
+					if(arr[x] == value) {
+						index = x;
+						break;
+					}
+				}
+				
+				return index;
+			}
+		B:二分查找(折半查找)
+			针对数组有序的情况(千万不要先排序，在查找)
+			
+			public static int binarySearch(int[] arr,int value) {
+				int min = 0;
+				int max = arr.length-1;
+				int mid = (min+max)/2;
+				
+				while(arr[mid] != value) {
+					if(arr[mid] > value) {
+						max = mid - 1;
+					}else if(arr[mid] < value) {
+						min = mid + 1;
+					}
+					
+					if(min > max) {
+						return -1;
+					}
+					
+					mid = (min+max)/2;
+				}
+				
+				return mid;
+			}
+	(3)Arrays工具类
+		A:是针对数组进行操作的工具类。包括排序和查找等功能。
+		B:要掌握的方法(自己补齐方法)
+			把数组转成字符串：
+			排序：
+			二分查找：
+	(4)Arrays工具类的源码解析
+	(5)把字符串中的字符进行排序
+		举例：
+			"edacbgf"
+			得到结果
+			"abcdefg"
+		答：可以先得到char[]数组，然后调用Arrays.sort(c, 0, s.length());c是转换的数组，后面是要排序,这里表示全部都要排序，
+			当然可以只排序前面指定的一部分
+
+
+3:Integer(掌握)
+	(1)为了让基本类型的数据进行更多的操作，Java就为每种基本类型提供了对应的包装类类型
+		byte 		Byte
+		short		Short
+		int		Integer
+		long		Long
+		float		Float
+		double		Double
+		char		Character  
+		boolean		Boolean
+	(2)Integer的构造方法
+		A:Integer i = new Integer(100);
+		B:Integer i = new Integer("100");
+			注意：这里的字符串必须是由数字字符组成
+	(3)String和int的相互转换
+		A:String -- int
+			Integer.parseInt("100");-------------------------这个方法常用
+		B:int -- String
+			String.valueOf(100);
+	(4)其他的功能(了解)
+		进制转换
+		-------掌握任意进制转换：
+			Integer.toString(要转换的数，对应的进制数)，它可以整数转换成2-36的进制   36是因为  0-9，a-z，别的就没有表示字母了
+	(5)JDK5的新特性
+		自动装箱	基本类型--引用类型
+		自动拆箱	引用类型--基本类型
+		
+		把下面的这个代码理解即可：
+			Integer i = 100;----------这里将Integer.valueOf(100);
+			i += 200;    Integer.valueOf(i.intValue()+200);
+ 				所以这里要注意，如果前面i=null，然后直接 i+=200；则会报空指针错，因为这里要调用.valueOf()方法
+	(6)面试题
+		-128到127之间的数据缓冲池问题
+---------------------------------------------------------------------------
+Integer的数据直接赋值，而不是通过new的，如果该值在-128-127之间，会直接在缓冲池里找，有则直接赋值，没有则从新创建，
+       但是，如果不在这个范围，则会在堆内存中创建
+  如果是new的，则肯定会每个独自开辟空间
+
+   注意：这种要和字符串的直接赋值，不要记混淆了
+
+
+还要知晓：int i = 100；其实反编译后 是  byte b = 100；如果大于127，就变成char c = '..';就变成char类型了
+现在还不晓得区别
+
+---------------------------------------------------------------------------
+
+4:Character(了解)
+	(1)Character构造方法	
+		Character ch = new Character('a');
+	(2)要掌握的方法：(自己补齐)
+		A:判断给定的字符是否是大写
+		B:判断给定的字符是否是小写
+		C:判断给定的字符是否是数字字符
+		D:把给定的字符转成大写
+		E:把给定的字符转成小写
+	(3)案例：
+		统计字符串中大写，小写及数字字符出现的次数
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

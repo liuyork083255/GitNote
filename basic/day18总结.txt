@@ -1,0 +1,330 @@
+1:Map(掌握)
+
+
+注意：
+	这里的hashmap中的键是依赖哈希表
+	这里的treemap中的键是依赖红黑树
+        都是跟键有关，跟后面的值无关
+        这两个就刚好跟前的set中的hashset和treeset对应，帮助记忆
+
+        创建treeset用无参构造，则表示默认的自然排序
+	在用有参构造是注意：因为比较的是键，而比较器比较又要有对象，所以我们的键就是一个自定义对象，然后完成重写，不重写就报错
+
+	还有就是这两中排序都是独立的，他们没有合作的部分，两者只能选择一个（如果都实现则是以比较器为主）--------------通过构造器来判断
+
+	注意：如果给出了两种排序，那一比较器为主
+
+----------------------------------------------------------------------------------------------------------
+必须理解：
+	Map中的HashMap也是 无序，唯一的（指的是键），同样是通过compareTo和equals来保证
+		如果是自定义类型并且没有重写这两个方法进行put操作是不会报错的，因为会调用默认的Oject的这两个，但是这样就没有意义了
+
+	Map中的TreeMap也是 有序 唯一的 （指的是键），同样也是靠两个接口来实现的
+		如果是自定义类型进行put操作会报错，因为没有实现两个接口，没有办法比较
+
+------------------------------------------------------------------------------------------------------------
+
+
+	(1)将键映射到值的对象。一个映射不能包含重复的键；每个键最多只能映射到一个值。 
+	(2)Map和Collection的区别?
+		A:Map 存储的是键值对形式的元素，键唯一，值可以重复。夫妻对
+		B:Collection 存储的是单独出现的元素，子接口Set元素唯一，子接口List元素可重复。光棍
+	(3)Map接口功能概述(自己补齐)
+ 		* 1:添加功能
+		* 		V put(K key,V value):添加元素。这个其实还有另一个功能?先不告诉你，等会讲
+		* 			如果键是第一次存储，就直接存储元素，返回null
+ 		* 			如果键不是第一次存在，就用值把以前的值替换掉，返回以前的值
+ 		* 2:删除功能
+ 		* 		void clear():移除所有的键值对元素
+ 		* 		V remove(Object key)：根据键删除键值对元素，并把值返回-------------如果没有，则返回null
+		* 3:判断功能
+ 		* 		boolean containsKey(Object key)：判断集合是否包含指定的键
+ 		* 		boolean containsValue(Object value):判断集合是否包含指定的值
+		* 		boolean isEmpty()：判断集合是否为空
+		* 4:获取功能
+		* 		Set<Map.Entry<K,V>> entrySet():???----------这个就是获取键值对对象
+		* 		V get(Object key):根据键获取值-------------有则返回值，无则返回null
+ 		* 		Set<K> keySet():获取集合中所有键的集合--------------得到的是Set集合类型
+		* 		Collection<V> values():获取集合中所有值的集合--------得到的是Collection集合类型
+ 		* 5：长度功能
+ 		* 		int size()：返回集合中的键值对的对数
+
+	(4)Map集合的遍历-------------这是重点
+		A:键找值
+			a:获取所有键的集合
+			b:遍历键的集合,得到每一个键
+			c:根据键到集合中去找值
+		
+		B:键值对对象找键和值
+			a:获取所有的键值对对象的集合
+			b:遍历键值对对象的集合，获取每一个键值对对象
+			c:根据键值对对象去获取键和值
+			
+		代码体现：
+			Map<String,String> hm = new HashMap<String,String>();
+			
+			hm.put("it002","hello");
+			hm.put("it003","world");
+			hm.put("it001","java");
+			
+			//方式1 键找值
+			Set<String> set = hm.keySet();
+			for(String key : set) {
+				String value = hm.get(key);
+				System.out.println(key+"---"+value);
+			}
+			
+			//方式2 键值对对象找键和值
+			Set<Map.Entry<String,String>> set2 = hm.entrySet(); ----------这里将Map.Entry看成是一种类型，他实际是接口
+			for(Map.Entry<String,String> me : set2) {
+				String key = me.getKey();               ------这里对象的getKey和getValue就是主要方法
+				String value = me.getValue();
+				System.out.println(key+"---"+value);
+			}
+
+注意：
+	HashMap不管用方式一还是方式二得到的键，遍历出来的都是无序的
+	TreeMap不管用方式一还是方法二得到的键，把你出来的都是有序的
+
+
+	(5)HashMap集合的练习----------------HashMap保证键唯一，其实感觉Map也是键唯一啊？？？？？？？？？？
+-------------------------------------------------------------
+hashmap底层依赖哈希表，所以跟HashSet一样是依赖HashCode和equals方法，故我们如果要自定义对象，就要重写这两个方法
+
+视频中讲了LinkedHashMap说明在原来的性质上多了有序性，即输入和输出顺序一致，不是排序
+
+-------------------------------------------------------------
+		A:HashMap<String,String>
+		B:HashMap<Integer,String>
+		C:HashMap<String,Student>
+		D:HashMap<Student,String>
+	(6)TreeMap集合的练习		
+		A:TreeMap<String,String>
+		B:TreeMap<Student,String>
+	(7)案例
+		A:统计一个字符串中每个字符出现的次数
+		B:集合的嵌套遍历
+			a:HashMap嵌套HashMap
+			b:HashMap嵌套ArrayList
+			c:ArrayList嵌套HashMap
+			d:多层嵌套
+----------------------------------------------------------------------------------
+ * 1:Hashtable和HashMap的区别?
+ * Hashtable:线程安全，效率低。不允许null键和null值
+ * HashMap:线程不安全，效率高。允许null键和null值
+ * 
+ * 2:List,Set,Map等接口是否都继承子Map接口?
+ * List，Set不是继承自Map接口，它们继承自Collection接口
+ * Map接口本身就是一个顶层接口
+ */
+
+----------------------------------------------------------------------------------
+			
+2:Collections(理解)	
+	(1)是针对集合进行操作的工具类
+	(2)面试题：Collection和Collections的区别
+		A:Collection 是单列集合的顶层接口，有两个子接口List和Set
+		B:Collections 是针对集合进行操作的工具类，可以对集合进行排序和查找等
+	(3)常见的几个小方法：
+
+ * public static <T> void sort(List<T> list)：排序 默认情况下是自然顺序。
+        ----------------该方法还有一个同名方法，就是给出了第二个参数，传递一个比较器，利用比较器来排序
+ * public static <T> int binarySearch(List<?> list,T key):二分查找
+ * public static <T> T max(Collection<?> coll):最大值
+ * public static void reverse(List<?> list):反转
+ * public static void shuffle(List<?> list):随机置换
+			利用map，键是arraylist，值是牌，arraylist可以很好的洗牌和排序
+
+	(4)案例
+		A:ArrayList集合存储自定义对象的排序
+		B:模拟斗地主洗牌和发牌
+		C:模拟斗地主洗牌和发牌并对牌进行排序
+
+
+
+方法总结
+	Collection只有add(E e)方法，没有单独获取方法，获取只能用遍历来取
+
+	List 
+	  添加	add(E e)
+		add(int index, E element) 
+          获取  get(int index)
+
+        ArrayList   的获取和List一样
+
+	Vector  的获取和List一样
+
+	LinkedList  获取多了getFirst和getLast            -----------------注意：LinkedList也可以用get(index i)方法，虽然低层是链表
+                    添加多了addFirst和addLast
+
+	Set   获取add(E e)和addAll(Collection<? extends E> c)
+        它的子类hashset和treeset都只有添加的功能，获取都要靠遍历
+
+
+
+	而Map   只需要记住get(Object key)和put(K key, V value)即可
+
+	放屁：还有两个keySet和entrySet  来获得集合来遍历
+
+
+
+
+
+
+
+
+
+1:集合(自己补齐)
+	Collection(单列集合)
+		List(有序,可重复)
+			ArrayList
+				底层数据结构是数组,查询快,增删慢
+				线程不安全,效率高
+			Vector
+				底层数据结构是数组,查询快,增删慢
+				线程安全,效率低
+			LinkedList
+				底层数据结构是链表,查询慢,增删快
+				线程不安全,效率高
+		Set(无序,唯一)
+			HashSet
+				底层数据结构是哈希表。
+				哈希表依赖两个方法：hashCode()和equals()
+				执行顺序：
+					首先判断hashCode()值是否相同
+						是：继续执行equals(),看其返回值
+							是true:说明元素重复，不添加
+							是false:就直接添加到集合
+						否：就直接添加到集合
+				最终：
+					自动生成hashCode()和equals()即可
+					
+				LinkedHashSet
+					底层数据结构由链表和哈希表组成。
+					由链表保证元素有序。
+					由哈希表保证元素唯一。
+			TreeSet
+				底层数据结构是红黑树。(是一种自平衡的二叉树)
+				如何保证元素唯一性呢?
+					根据比较的返回值是否是0来决定
+				如何保证元素的排序呢?
+					两种方式
+						自然排序(元素具备比较性)
+							让元素所属的类实现Comparable接口
+						比较器排序(集合具备比较性)
+							让集合接收一个Comparator的实现类对象
+	Map(双列集合)
+		A:Map集合的数据结构仅仅针对键有效，与值无关。
+		B:存储的是键值对形式的元素，键唯一，值可重复。
+		
+		HashMap
+			底层数据结构是哈希表。线程不安全，效率高
+				哈希表依赖两个方法：hashCode()和equals()
+				执行顺序：
+					首先判断hashCode()值是否相同
+						是：继续执行equals(),看其返回值
+							是true:说明元素重复，不添加
+							是false:就直接添加到集合
+						否：就直接添加到集合
+				最终：
+					自动生成hashCode()和equals()即可
+			LinkedHashMap
+				底层数据结构由链表和哈希表组成。
+					由链表保证元素有序。
+					由哈希表保证元素唯一。
+		Hashtable
+			底层数据结构是哈希表。线程安全，效率低
+				哈希表依赖两个方法：hashCode()和equals()
+				执行顺序：
+					首先判断hashCode()值是否相同
+						是：继续执行equals(),看其返回值
+							是true:说明元素重复，不添加
+							是false:就直接添加到集合
+						否：就直接添加到集合
+				最终：
+					自动生成hashCode()和equals()即可
+		TreeMap
+			底层数据结构是红黑树。(是一种自平衡的二叉树)
+				如何保证元素唯一性呢?
+					根据比较的返回值是否是0来决定
+				如何保证元素的排序呢?
+					两种方式
+						自然排序(元素具备比较性)
+							让元素所属的类实现Comparable接口
+						比较器排序(集合具备比较性)
+							让集合接收一个Comparator的实现类对象
+	
+2:到底使用那种集合(自己补齐)
+	看需求。
+	
+	是否是键值对象形式:
+		是：Map
+			键是否需要排序:
+				是：TreeMap
+				否：HashMap
+			不知道，就使用HashMap。
+			
+		否：Collection
+			元素是否唯一:
+				是：Set
+					元素是否需要排序:
+						是：TreeSet
+						否：HashSet
+					不知道，就使用HashSet
+					
+				否：List
+					要安全吗:
+						是：Vector(其实我们也不用它,后面我们讲解了多线程以后，我在给你回顾用谁)
+						否：ArrayList或者LinkedList
+							增删多：LinkedList
+							查询多：ArrayList
+						不知道，就使用ArrayList
+			不知道，就使用ArrayList
+			
+3:集合的常见方法及遍历方式
+	Collection:
+		add()
+		remove()
+		contains()
+		iterator()
+		size()
+		
+		遍历：
+			增强for
+			迭代器
+			
+		|--List
+			get()
+			
+			遍历：
+				普通for
+		|--Set
+	
+	Map:      -----------------不能用增强for，因为里面有两个数据
+		put()
+		remove()
+		containskey(),containsValue()
+		keySet()
+		get()
+		value()
+		entrySet()
+		size()
+		
+		遍历：
+			根据键找值
+			根据键值对对象分别找键和值
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

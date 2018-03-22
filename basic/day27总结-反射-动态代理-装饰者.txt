@@ -1,0 +1,582 @@
+1:反射(理解)
+
+-------------------------------------------------------------------------
+反射概念
+
+类的加载:
+	当程序要使用某个类时，如果该类还未被加载到内存中，
+	则系统会通过加载，连接，初始化三步来实现对这个类进行初始化。
+
+	加载步骤：
+		就是指将class文件读入内存，并为之创建一个Class对象。
+		任何类被使用时系统都会建立一个Class对象。
+
+	连接步骤：
+		验证 是否有正确的内部结构，并和其他类协调一致
+		准备 负责为类的静态成员分配内存，并设置默认初始化值
+		解析 将类的二进制数据中的符号引用替换为直接引用
+
+	初始化步骤：
+		 就是我们以前讲过的初始化步骤
+
+类加载器
+	负责将.class文件加载到内在中，并为之生成对应的Class对象。
+	虽然我们不需要关心类加载机制，但是了解这个机制我们就能更好的理解程序的运行。
+
+类加载器的组成	
+	Bootstrap ClassLoader 根类加载器	
+	Extension ClassLoader 扩展类加载器
+	Sysetm ClassLoader 系统类加载器
+
+Bootstrap ClassLoader 根类加载器
+	也被称为引导类加载器，负责Java核心类的加载比如System,String等。在JDK中JRE的lib目录下rt.jar文件中
+
+Extension ClassLoader 扩展类加载器
+	负责JRE的扩展目录中jar包的加载。在JDK中JRE的lib目录下ext目录
+
+Sysetm ClassLoader 系统类加载器	
+	负责在JVM启动时加载来自java命令的class文件，以及classpath环境变量所指定的jar包和类路径	
+
+
+反射：
+	JAVA反射机制是在运行状态中，对于任意一个类，都能够知道这个类的所有属性和方法；
+	对于任意一个对象，都能够调用它的任意一个方法和属性；
+	这种动态获取的信息以及动态调用对象的方法的功能称为java语言的反射机制。
+	要想解剖一个类,必须先要获取到该类的字节码文件对象。
+	而解剖使用的就是Class类中的方法.所以先要获取到每一个字节码文件对应的Class类型的对象.
+
+
+-------------------------------------------------------------------------
+
+	(1)类的加载及类加载器
+	(2)反射：
+		通过字节码文件对象，去使用成员变量，构造方法，成员方法
+
+ * 反射：就是通过class文件对象，去使用该文件中的成员变量，构造方法，成员方法。
+ * 
+ * Person p = new Person();
+ * p.使用
+ * 
+ * 要想这样使用，首先你必须得到class文件对象，其实也就是得到Class类的对象。
+ * Class类：
+ * 		成员变量	Field               ----set修改值                 nameField.set(obj, "林青霞");
+ * 		构造方法	Constructor	    ----newInstance创建对象       con.newInstance("风清扬");
+ * 		成员方法	Method		    ----invoke调用                m1.invoke(obj);
+
+			注意：得到class对象就可以调用方法获取这三个对象，每个对象都有四中方法，
+				获取单个，强行获取单个，获取所有，强制获取所有
+				getXXX     getDeclaredXXX
+
+			注意：能获取不代表能够访问，要访问则要用得到的Field   Constructor  Method这三个对象设置setAccessible(true)才可以
+
+
+ ------------- 一个类其实就是成员变量，构造方法，成员方法，而在Class文件中，他们被分别划分为三个类对象，也就是这三个类对象可以调用它们
+
+-------------------------------------------------------------------------
+
+ * 获取class文件对象的方式：
+ * A:Object类的getClass()方法        -------- 类对象获取 Class对象
+ * B:数据类型的静态属性class         -------- 类名获取Class 对象
+ * C:Class类中的静态方法
+ * 		public static Class forName(String className) -----------注意：参数必须是类名路径，全路径（包名.className）
+
+ * 一般我们到底使用谁呢?
+ * 		A:自己玩	任选一种，第二种比较方便
+ * 		B:开发	第三种
+ * 			为什么呢?因为第三种是一个字符串，而不是一个具体的类名。这样我们就可以把这样的字符串配置到配置文件中。
+
+
+--------------------------------------------------------------------------------------------------------
+
+	(3)反射的使用
+		A:通过反射获取构造方法并使用
+
+--------------------------------------------------------------------------------------------------------
+获取构造方法：
+	public Constructor[] getConstructors():所有公共构造方法      --------------注意：只能获取public修饰的构造方法
+	public Constructor[] getDeclaredConstructors():所有构造方法  --------------注意：可以获取所有的构造方法，包括私有
+
+获取单个构造方法：
+	public Constructor<T> getConstructor(Class<?>... parameterTypes)     
+		     -----------根据参数来判断返回哪一个构造，注意参数类型是Class类型
+				必须注意：整型不是用Integer.class  这是会报错的，而是 int.class,并且char类型的也是char.class，Object是Object.class
+				还要注意：对应参数赋值的时候，是什么类型就赋什么类型，尤其是 int类型和char类型的转换，传参不存在自动转换。
+
+		参数表示的是：你要获取的构造方法的构造参数个数及数据类型的class字节码文件对象
+
+		Constructor con = c.getConstructor();------------------- 返回的是构造方法对象
+
+创建实例：
+	
+	public T newInstance(Object... initargs)
+	使用此 Constructor 对象表示的构造方法来创建该构造方法的声明类的新实例，并用指定的初始化参数初始化该实例。
+		Object obj = con.newInstance();
+		System.out.println(obj);
+
+	链式编程：Class.forName("it.cast.reflect.Person").getConstructor(char.class,String.class).newInstance('c',"java happy");
+		但是这样不能获取private修饰的构造方法
+
+那如何访问私有构造呢：
+		// 获取私有构造方法对象
+		// NoSuchMethodException：每个这个方法异常
+		// 原因是一开始我们使用的方法只能获取公共的，下面这种方式就可以了。
+		Constructor con = c.getDeclaredConstructor(String.class);           --------------这样就可以获取私有构造了，但是不代表能访问
+
+		// 用该私有构造方法创建对象
+		// IllegalAccessException:非法的访问异常。
+		// 暴力访问
+		con.setAccessible(true);// 值为true则指示反射的对象在使用时应该取消Java语言访问检查。
+		Object obj = con.newInstance("风清扬"); -------------如果直接用私有构造则会报错，必须由上面这一句设置才可以，取消检查机制
+
+		但是注意了：这样过后获得的对象还是不能方法private修饰的成员变量和方法
+
+--------------------------------------------------------------------------------
+
+
+		B:通过反射获取成员变量并使用
+--------------------------------------------------------------------------------------------------------
+通过Class获取成员变量：     -------------注意了：获取的成员包括父类的
+		Field[] fields = c.getFields();        ---------------  同样这种方式只能获取public成员变量
+		Field[] fields = c.getDeclaredFields(); --------------  这种方式可以获取所有成员变量
+		for (Field field : fields) {
+		System.out.println(field);
+		}
+
+获取单个成员变量：
+		Field addressField = c.getField("address");   --------------这是获取指定变量的对象，但是只能是获取public修饰的
+		Field nameField = c.getDeclaredField("name"); --------------这是获取任意修饰的对象
+			同构造一样，能获取不代表就能访问该变量
+		nameField.setAccessible(true);         --------------  这样设置之后就可以设置该变量了
+		nameField.set(obj, "林青霞");         
+			注意：这种设置方式很逆向思维，obj是该类的对象（要设置该值就要先获得该对象），然后用成员对象Field调用set方法，注意类型要一致
+
+**************注意：（重点）
+
+	经过测试发现,在获取成员的时候，如果使用getFields  则可以获取所有的public成员（只能是public），包括中父类哪里得到的public成员
+			但是使用getDeclaredField  则只能获得本来中的成员，父类的任何类型都获取不到
+
+	但是获取成员方法的时候，结果又是另外一种：getMethods 获取的是所有public，包括父类甚至Object的public方法
+				   getDeclaredMethods  获取的是自己的所有，和父类的public（只能是public）
+
+
+	获取构造方法很简单，因为构造方法不能继承，所以只考虑本类的就可以了
+
+*****************
+
+--------------------------------------------------------------------------------------------------------
+
+
+		C:通过反射获取成员方法并使用
+-----------------------------------------------------------------------------------------
+获取方法步骤和上面一样：
+
+获取所有方法		
+	getMethods	-----------获取所有的方法，同样只能获取public修饰的（获取自己的，包括父亲的公共的方法）
+	getDeclaredMethods        --------------可以获取任意修饰的方法（获取自己的所有方法）
+获取单个方法		
+	getMethod	 ------------ 只能获取单个public方法	
+	getDeclaredMethod         ----------可以获取任意修饰的单个方法
+暴力访问		
+	method.setAccessible(true);   ------------- 取消java安全检查机制 ，这样就可以在获取后对其使用
+
+
+相关方法解析：
+	public Method getMethod(String name,Class<?>... parameterTypes)
+		参数解释： 第一个是要获取方法的名称（必须一致），第二个该方法的参数，为空则表示无参方法，不为空则注意参数类型全是class类型
+
+方法调用：
+	public Object invoke(Object obj,Object... args)
+	返回值是Object接收,第一个参数表示对象是谁，第二参数表示调用该方法的实际参数
+
+代码：
+		Constructor con = c.getConstructor();
+		Object obj = con.newInstance();
+
+		Method m1 = c.getMethod("show");
+		m1.invoke(obj); ----------以为是无参，所以后面参数为空
+
+--------------------------------------------------------------------------------------------------------
+
+面试题：
+	 * 我给你ArrayList<Integer>的一个对象，我想在这个集合中添加一个字符串数据，如何实现呢？
+
+	思路：首先知道，集合里面的泛型的class文件里面其实就是普痛类型，中间的泛型早就做了提前的转换。
+	      所以我们就拿class文件，然后调用add方法即可，这个这个方法的参数在class文件里面是Object类型
+
+答案代码：
+		// 创建集合对象
+		ArrayList<Integer> array = new ArrayList<Integer>();
+
+		// array.add("hello");
+		// array.add(10);
+
+		Class c = array.getClass(); // 集合ArrayList的class文件对象
+		Method m = c.getMethod("add", Object.class);
+
+		m.invoke(array, "hello"); // 调用array的add方法，传入的值是hello
+		m.invoke(array, "world");
+		m.invoke(array, "java");
+
+		System.out.println(array);
+
+
+还有一类面试题：
+	就是利用反射来设置、调用、执行一个类的私有成员变量和方法
+
+
+-----------------------------------------------------------------------------------------
+
+	(4)反射案例
+		A:通过反射运行配置文件的内容
+		B:通过反射越过泛型检查
+		C:通过反射给任意的一个对象的任意的属性赋值为指定的值
+
+	(5)动态代理
+
+代理：
+	本来应该自己做的事情，却请了别人来做，被请的人就是代理对象。
+
+动态代理：
+	在程序运行过程中产生的这个对象
+	而程序运行过程中产生对象其实就是我们刚才反射讲解的内容，所以，动态代理其实就是通过反射来生成一个代理
+
+
+理解起来很费劲：可以结合视频再三看
+
+
+
+下面这是自定义的类，必须实现InvocationHandler 接口重写invoke方法
+
+public class MyInvocationHandler implements InvocationHandler {
+	private Object target; // 目标对象
+
+	public MyInvocationHandler(Object target) {
+		this.target = target;
+	}
+
+	@Override
+	public Object invoke(Object proxy, Method method, Object[] args)
+			throws Throwable {
+		System.out.println("权限校验");---------------------这就是我们以后要加的检验代码，这里用一句输出表示
+
+		Object result = method.invoke(target, args);  -----------其实这一句才是真正执行的方法，add delete等等           
+		System.out.println("日志记录");
+		return result; // 返回的是代理对象
+	}
+}
+
+
+public class Test {
+	public static void main(String[] args) {
+		UserDao ud = new UserDaoImpl();
+			注意：jdk只能支持接口的动态代理，所以这里用的是一个类UserDao接口接收UserDaoImpl实现类
+
+		// Proxy类中有一个方法可以创建动态代理对象
+		// public static Object newProxyInstance(ClassLoader loader,Class<?>[] interfaces,InvocationHandler h)
+		// 我准备对ud对象做一个代理对象，对谁做代理就把谁传过去
+		MyInvocationHandler handler = new MyInvocationHandler(ud);
+
+		UserDao proxy = (UserDao) Proxy.newProxyInstance(ud.getClass()            
+				.getClassLoader(), ud.getClass().getInterfaces(), handler);
+				----------------前面两个参数其实都是固定的，只是后一个要变化
+
+		proxy.add();            -------------这个时候调用的方法其实都是点用代理对象的invoke方法
+		proxy.delete();
+		proxy.update();
+		proxy.find();
+		System.out.println("-----------");
+	}
+}
+
+
+	在Java中java.lang.reflect包下提供了一个Proxy类的静态方法和一个InvocationHandler接口的invoke方法，
+	通过使用这个类和接口就可以生成动态代理对象。
+	JDK提供的代理只能针对接口做代理。我们有更强大的代理cglib ---------------这是在后面的框架中使用的
+ 
+	记忆思路：   自己写一个代理类，这个类必须实现一个接口的invoke方法，同时创一个带参的构造来接受要代理的对象
+		     invoke方法里面就是要代理的内容，里面的关键一步就是调用原来对象的自己的方法
+
+                     接下来就是调用如何使用代理类来进行代理？
+		     将要代理的对象传给代理类，
+		     然后使用一个Proxy.newProxyInstance(ud.getClass().getClassLoader(), ud.getClass().getInterfaces(), handler);
+		     最后就是把代理的类传给这个方法的最后参数，见面两个固定的，注意的这个方法反返回的是Object方法,强转一下就好了
+
+-----------------------------------------------------------------------------------------
+	
+2:设计模式
+	(1)装饰设计模式
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		
+		Scanner sc = new Scanner(System.in);
+
+这个主要在于理解：可以参考图解来进行理解
+装饰就是对某一个方法进行装饰，别的方法还是用的原来的。
+
+public interface Phone {
+	public abstract void call();
+} -------------------------------------这个接口是最初的功能，没有添加功能
+
+public class IPhone implements Phone {
+
+	@Override
+	public void call() {
+		System.out.println("手机可以打电话了");
+	}
+
+}------------------------------------这个类是实现了上面的接口，实现了call方法，注意：这个类其实就是要被装饰的类
+
+
+
+public abstract class PhoneDecorate implements Phone {
+
+	private Phone p;
+
+	public PhoneDecorate(Phone p) {
+		this.p = p;        --------------------这一步很重实现了别的方法都不变，而堆某一个方法进行装饰
+	}
+
+	@Override
+	public void call() {
+		this.p.call();
+	}
+}----------------------------------这个抽象类就是一个要装饰的装饰抽象类，它实现了最初的接口，现在里面实现的方法全是接口的
+
+
+public class RingPhoneDecorate extends PhoneDecorate {
+
+	public RingPhoneDecorate(Phone p) {
+		super(p);
+	}
+
+	@Override
+	public void call() {
+		System.out.println("手机可以听彩铃");
+		super.call();
+	}
+}----------------------------------这个就是装饰类的实现
+
+
+
+总的来说就是手机本来只有打电话功能，但为了给它添加一个彩铃功能，就创建了一个彩铃抽象类，并且实现Phone接口，这个一步很重要，
+因为这样就可以区分继承了，Phong原来的方法都可以执行原来的方法，而不用改动，装饰就是给某一个方法进行装饰，别的方法还是原来的
+所以里面装饰抽象类很重要
+
+还有一个思想就是：装饰抽象类成型以后就可以固定了，以后要装饰哪个方法就可以让装饰实现类去实现这个装饰抽象类的对应的方法
+
+
+装饰的最后一个步骤就是将一个原来的对象传给一个装饰类，对某一个方法进行装饰。
+
+代码：
+		Phone p = new IPhone();
+		p.call();
+		System.out.println("------------");
+
+		// 需求：我想在接电话前，听彩铃
+		PhoneDecorate pd = new RingPhoneDecorate(p);
+		pd.call();
+
+
+装饰模式还有个很重要思想：
+	装饰可以组合在一起使用
+		pd = new RingPhoneDecorate(new MusicPhoneDecorate(p));----这里看出两种装饰后就和在一起，这个继承不能实现的
+
+这种装饰我们在IO流中间见过：
+		InputStream is = System.in;                    -------------最初原型
+		InputStreamReader isr = new InputStreamReader(is);   ------------第一次装饰成字符
+		BufferedReader br = new BufferedReader(isr);         ------------第二次装饰成高效字符
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));      ---------------一句代码实现
+
+----------------------------------------------------------------------------------------------
+
+
+	(2)模版设计模式
+
+代码实现理解：
+
+public abstract class GetTime {
+	// 需求：请给我计算出一段代码的运行时间
+	public long getTime() {
+		long start = System.currentTimeMillis();
+		// 再给我测试一个代码：集合操作的，多线程操作，常用API操作的等等...
+		code();           ------------------------------可以看见，这个抽象方法在另一个方法中调用
+							那么子类执行getTime方法时就会使用自己实现的方法
+		long end = System.currentTimeMillis();
+		return end - start;
+	}
+	public abstract void code();       --------子类必须要重写该方法
+}
+
+public class ForDemo extends GetTime {
+	@Override
+	public void code() {
+		for (int x = 0; x < 100000; x++) {
+			System.out.println(x);
+		}
+	}
+
+}
+
+那么这样过后测试类就可以创建
+		GetTime gt = new ForDemo();                  ---------------利用多态，创建对象
+		System.out.println(gt.getTime() + "毫秒");   ---------------其实是点用的子类类的方法
+
+
+需要注意的就是：抽象方法在另一个方法中被调用
+
+缺点：模型有问题则要修改模型，也就是修改抽象类
+
+-----------------------------------------------------------------------------------------------
+		
+
+3:JDK新特性
+	(1)JDK5(掌握)
+		装箱和拆箱
+		泛型
+		增强for
+		静态导入
+		可变参数
+		枚举
+
+枚举：
+视频做了三个版本的枚举类
+枚举中的每一个对象其实都是一个该类的对象
+
+第一版：
+	public enum Direction {
+		FRONT, BEHIND, LEFT, RIGHT;               ----------------这就是枚举项
+	}
+
+第二版：
+public enum Direction2 {
+	FRONT("前"), BEHIND("后"), LEFT("左"), RIGHT("右");               ----------------这就是枚举项
+
+	private String name;
+
+	private Direction2(String name) {
+		this.name = name;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+}
+
+
+第三版：
+public enum Direction3 {
+	FRONT("前") {                ----------------这就是枚举项
+		@Override
+		public void show() {
+			System.out.println("前");
+		}
+	},
+	BEHIND("后") {
+		@Override
+		public void show() {
+			System.out.println("后");
+		}
+	},
+	LEFT("左") {
+		@Override
+		public void show() {
+			System.out.println("左");
+		}
+	},
+	RIGHT("右") {
+		@Override
+		public void show() {
+			System.out.println("右");
+		}
+	};
+
+	private String name;
+
+	private Direction3(String name) {
+		this.name = name;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public abstract void show();
+}
+
+枚举注意事项：
+	定义枚举要用关键字 enum
+	所有枚举都是Enum子类
+	枚举类第一行必须是枚举项
+	枚举最后一个分号可以省略，但是后面有东西就不能省略
+	枚举可以有构造，但是必须是private，它默认的也是private
+	枚举可以有抽象方法，但是枚举项必须重写
+
+枚举中的方法：
+	这里只给出了一个，values
+	通过枚举类名类调用，返回的是该枚举类数组，遍历可以获取每一个对象
+
+------------------------------------------------------------------------------------------------
+
+	(2)JDK6(了解)
+	(3)JDK7(理解)
+		二进制的表现形式
+
+1：这样过后就可以  int x = 0b10101；
+这是在低版本的不可以 的
+2：数值中间可以出现下划线  int x = 1_1000_1999
+但是注意：
+		不能出现在进制标识和数值之间
+		不能出现在数值开头和结尾
+		不能出现在小数点旁边
+3：
+try-with-resources 语句
+
+格式try(...){      ------------这个小括号里面放的是要释放的资源，这样就可以自动释放了
+	....
+     }catch(){...}
+
+
+注意：try(必须是java.lang.AutoCloseable的子类对象){…}              -------------也就是说里面的对象必须有close方法才可以，有的对象是没有这个方法的
+
+		try (FileReader fr = new FileReader("a.txt");
+				FileWriter fw = new FileWriter("b.txt");) {
+			int ch = 0;
+			while ((ch = fr.read()) != -1) {
+				fw.write(ch);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+-------------------------------------
+
+		用_分隔数据
+		switch语句可是用字符串
+		泛型推断(菱形泛型)
+		多catch的使用
+		自动释放资源的用法
+	(4)JDK8(了解)
+		可以去网上了解资料
+
+
+接口中可以定于默认方法：default 和 static 在5 6 7中都是不可以的
+
+default  能通过子类调用
+
+static  可以直接用接口名调用
+
+这是jdk8 的新特性
+
+
+
+
+
+
+
+
+
+
+
+
+
+
