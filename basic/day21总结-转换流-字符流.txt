@@ -1,0 +1,177 @@
+1:字符流(掌握)
+
+	(1)字节流操作中文数据不是特别的方便，所以就出现了转换流。
+	   转换流的作用就是把字节流转换字符流来使用。
+	(2)转换流其实是一个字符流
+		字符流 = 字节流 + 编码表
+	(3)编码表
+		A:就是由字符和对应的数值组成的一张表
+		B:常见的编码表
+			ASCII        7位表示，最高位符号位
+			ISO-8859-1   拉丁码表   8位表示
+			GB2312       简体中文 
+			GBK          在简体中文增加
+			GB18030      在简体中文增加
+			Unicode      国际标准码，所有文字用两个字节表示，java就是用的这个
+				     因为只有两个字节，有的表示不了
+			UTF-8        最多用三个字节来表示字符，不代表都用三个
+				     能一个就一个，两个就两个，三个就三个。
+		C:字符串中的编码问题
+			编码
+				String -- byte[]
+			解码
+				byte[] -- String
+---------------------------------------------------------------------------------------------
+字符串编码问题详解：
+ * String(byte[] bytes, String charsetName):通过指定的字符集解码字节数组
+ * byte[] getBytes(String charsetName):使用指定的字符集合把字符串编码为字节数组
+
+ * 编码:把看得懂的变成看不懂的
+ * String -- byte[]
+ * 
+ * 解码:把看不懂的变成看得懂的
+ * byte[] -- String
+注意：默认编码是系统的默认，而不是java编译的默认，虽然java用的unicode
+      所以我们用的是GBK
+      ***如果不知晓，我们可以测试，就是那字符串按默认编码，然后用指定编码解码，如果正确，则指定编码正确
+所以，编码和解码一致就不会乱码了！！！
+
+---------------------------------------------------------------------------------------------
+注意：字符流只能处理文本文件，别的文件还是要用字节流来处理
+	(4)IO流中的编码问题
+		注意：字符流也有缓冲区
+		----------注意：这个输出流也类似BufferedOutputStream在写入的时候要flush才生效。--------------同样，读入是没有flush的
+
+		----------什么流转换成什么流，就看是写还是读，读则是字节通向字符，写则是字符通向字节
+
+		A:OutputStreamWriter------------就将其理解成能够直接调用write写入字符串，而不是字节了
+			OutputStreamWriter(OutputStream out):根据默认编码把字节流的数据转换为字符流
+			OutputStreamWriter(OutputStream out,String charsetName):根据指定编码把字节流数据转换为字符流
+			-----------这个这样理解：内部还是字节操作写入，但是这样过后就可以写入字符串了，然后指定一个编码即可
+			-----------它会会将字符串按指定编码编程字节。
+
+			掌握一个方法，write(String s)，这样就可以直接写入了，而不用再转换成字节了
+
+		B:InputStreamReader--------------------------------------没有flush
+			InputStreamReader(InputStream is):用默认的编码读取数据
+			InputStreamReader(InputStream is,String charsetName):用指定的编码读取数据
+			-----------这个就和上面一样比较来记忆，它就是读到的的字节，直接转成了字符，
+			-----------以前的InputStream  read()一下是一个字节，但是现在是一个字符------------也就是说可以直接读取一个中文而不会出错
+		
+			掌握一个方法：还有就是用它来读一般是用read()	
+
+		C:编码问题其实很简单
+			编码只要一致即可
+
+	(5)字符流
+		
+		-----------一定要有这个思想，reader和writer其实就是B:InputStreamReader和OutputStreamWriter，功能可以理解成完全相同，
+		-----------因为后两者名字太长了，所以提供了这个两个字符流。
+		-----------如果非要有什么区别：那就是后两者可以控制编码格式。
+                                   所以以后如果要写字符流，并且不用控制编码，就可以用reader和writer
+
+		Reader--------------------------FileReader fr = new FileReader("a.txt");可以看见，参数部分十分简单，不用new对象了
+			|--InputStreamReader
+				|--FileReader -------------它是子类，他的操作单位是字符
+			|--BufferedReader
+		Writer--------------------------FileWriter fw = new FileWriter("b.txt");可以看见，参数部分十分简单，不用new对象了
+			|--OutputStreamWriter
+				|--FileWriter -------------它是子类，他的操作单位是字符，也有缓冲区，写入要flush
+			|--BufferedWriter
+
+
+注意Wirter也有flush，这么理解，因为这个方法可以写入String，所以理解成内部也是有缓冲区，所以要用flush，不刷新则无法写入（父类转换流也是一样的）
+
+--------------------------------------------------------------------------------------
+ * 字符缓冲流的特殊方法：
+ * BufferedWriter:
+ * 		public void newLine():根据系统来决定换行符----------这就是开发中自动识别系统的换行符
+ * BufferedReader:
+ * 		public String readLine()：一次读取一行数据
+ * 		包含该行内容的字符串，不包含任何行终止符，如果已到达流末尾，则返回 null
+ *              所以它本身不包含换行符
+
+常用格式：      // 读写数据
+		String line = null;
+		while ((line = br.readLine()) != null) {-------------索引自动会跳到下一行
+			bw.write(line);
+			bw.newLine();------------这就是写入一个换行符
+			bw.flush();
+		}
+
+
+--------------------------------------------------------------------------------------
+	(6)复制文本文件(5种方式)
+		这里用到了一个LineNumberReader，里面有两个方法，可以设置行号号获取行号
+
+2:IO流小结(掌握)
+	IO流
+		|--字节流
+			|--字节输入流
+				InputStream
+					int read():一次读取一个字节
+					int read(byte[] bys):一次读取一个字节数组
+				
+					|--FileInputStream
+					|--BufferedInputStream
+			|--字节输出流
+				OutputStream
+					void write(int by):一次写一个字节
+					void write(byte[] bys,int index,int len):一次写一个字节数组的一部分
+					
+					|--FileOutputStream
+					|--BufferedOutputStream
+		|--字符流
+			|--字符输入流
+				Reader
+					int read():一次读取一个字符
+					int read(char[] chs):一次读取一个字符数组
+					
+					|--InputStreamReader
+						|--FileReader
+					|--BufferedReader
+						String readLine():一次读取一个字符串
+			|--字符输出流
+				Writer
+					void write(int ch):一次写一个字符
+					void write(char[] chs,int index,int len):一次写一个字符数组的一部分
+					
+					|--OutputStreamWriter
+						|--FileWriter
+					|--BufferedWriter
+						void newLine():写一个换行符
+						
+						void write(String line):一次写一个字符串
+
+
+学会总结：  
+	字节读取格式---FileInputStream
+		while((len=fis.read(bys))!=-1)
+
+	高效字节读取格式---BufferedInputStream
+		while((len=fis.read(bys))!=-1)
+
+	转换字符读取格式---InputStreamReader
+		while((len=fis.read()) != -1)
+
+	字符读取格式---FileReader
+		它没有自己的方法，都是继承父类OutputStreamReader的，所以也是while((len=fis.read()) != -1)
+
+	高效字符读取格式---BufferedReader
+		String line = null;
+		while((line=br.readLine())!=null)
+
+结合想象每个的写入格式？？？
+
+		前两个字节都是写入字节数组
+		后三个都可以直接写入字符串
+
+
+
+
+
+
+
+
+
+

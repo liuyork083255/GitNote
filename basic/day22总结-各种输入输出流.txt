@@ -1,0 +1,328 @@
+1:登录注册IO版本案例(掌握)
+	要求，对着写一遍。
+	
+	cn.itcast.pojo User
+	cn.itcast.dao UserDao
+	cn.itcast.dao.impl UserDaoImpl(实现我不管)
+	cn.itcast.game GuessNumber
+	cn.itcast.test	UserTest
+
+2:数据操作流(操作基本类型数据的流)(理解)----------他们有很多的读写方法，针对不同的数据类型
+	(1)可以操作基本类型的数据
+	(2)流对象名称	
+		------------------这两个配套使用，写入什么类型，就用读取流读对应位置上的数据
+		DataInputStream
+		DataOutputStream
+			-------------它的输出流方法write有很多方法
+		-----------感觉用处不大
+
+3:内存操作流(理解)
+	(1)有些时候我们操作完毕后，未必需要产生一个文件，就可以使用内存操作流。存储临时数据，程序结束，数据消失
+		------它们的close方法无效，不需要关闭
+	(2)三种
+		A:ByteArrayInputStream,ByteArrayOutputStream
+			------用无参构造，将数据写入一个字节数组，然后将这个数组用作读取流的构造参数，就可以读取了
+		B:CharArrayReader,CharArrayWriter
+			------操作类似，知识数据类型变了
+		C:StringReader,StringWriter
+			------操作类似，知识数据类型变了
+
+4:打印流(掌握)
+	流分两种：基本流（可以直接操作文件），高级流（在基础流上提供别的一些功能）
+	
+	同时要注意：这两个流可以自动刷新，都是在构造方法中添加一个true参数启动。并且调用println方法才可以触发，两个条件缺一不可
+
+	还有就是 printstream这个自动刷新很特别，因为是操作字节，那么不用刷新也可以写入
+		但是字符打印则必须要刷新或者close才能写入
+
+	注意：它们的print才能写任意类型，write是不能写任意类型，并且println可以自动换行的功能
+
+	(1)字节打印流，字符打印流
+	     打印流说明只有打印输出，没有读取---------可以操作任意数据类型数---------如果启动了刷新就能自动刷新
+
+		PrintStream  ---字节打印流，这也是我们经常用的System.out类型
+			构造方法中可以传入File、OutputStream（这种方式才有自动刷新） 等对象，通过调用write和print、println写入数据
+
+		PrintWriter  ---字符打印流
+			构造方法可以传入File、OutpuSrteam、Writer（这种方式才有自动刷新）等对象，通过调用wirte和print、println写入数据
+			二者用法和效果上基本一致，目前唯一区别使用是：文本文件用printwriter打印，别的用printstream打印
+
+	(2)特点：
+		A:只操作目的地,不操作数据源
+		B:可以操作任意类型的数据
+		C:如果启用了自动刷新，在调用println()方法的时候，能够换行并刷新
+		D:可以直接操作文件
+			问题：哪些流可以直接操作文件呢?
+			看API，如果其构造方法能够同时接收File和String类型的参数，一般都是可以直接操作文件的
+	(3)复制文本文件
+		BufferedReader br = new BufferedReader(new FileReader("a.txt"));
+		PrintWriter pw = new PrintWriter(new FileWriter("b.txt"),true);-------就可以直接写数据了，需要注意的是它可以写很多类型
+			--------如何启用自动刷新呢？就是在构造方法中添加一个true类型的参数
+				其实调用println方法就可以自动刷新了   pw.print("")这是没有刷新，pw.println("")这才刷新了，还有实现换行功能
+		
+		String line = null;
+		while((line=br.readLine())!=null) {
+			pw.println(line);
+		}
+		
+		pw.close();
+		br.close();
+			
+
+5:标准输入输出流(理解)
+	(1)System类下面有这样的两个字段
+		in 标准输入流
+		out 标准输出流
+		System.out = PrintStream------------------平时我们用的打印就是printstream打印流
+		System.in  = InputStream
+
+		这两个System的in和out都是跟控制台结合的，但他们的类型都是我们熟悉的
+		也就是说左边才是对应控制台，而右边的仅仅是他们的类型而已，并不能理解成右边的可以用来跟控制台交换数据
+		
+	(2)三种键盘录入方式
+		A:main方法的args接收参数
+		B:System.in通过BufferedReader进行包装
+			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));-------这个就是等价于下面这句输入语句
+		C:Scanner
+			Scanner sc = new Scanner(System.in);
+	(3)输出语句的原理和如何使用字符流输出数据
+		A:原理
+			System.out.println("helloworld");
+			
+			PrintStream ps = System.out;----------------字节打印流
+			ps.println("helloworld");
+		B:把System.out用字符缓冲流包装一下使用
+			BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(System.out));--因为PrintStream父类的父类是OutputStream
+				这样包装后只能用wirte来输出，并且要close才能输出到控制台
+
+		包装思想其实很简单，          -----------------------这样记忆：都是包装成高效，利用转换流来转成高效
+			只要理解System.in 就是将控制台看成一个读取文件即可-------重点理解
+				System.out就是将控制台看成一个输入文件即可-------重点理解
+
+
+6:随机访问流(理解)
+	RandomAccessFile(String name, String mode),注意第二个参数，一般是"rw"，表示可可读可写
+		读取操作这个对象都可以操作，它用完也要释放资源，close，它没有刷新
+	因为是可以随机写入，说明有方法可以控制指针来改变位置，实现指定位置输入，这个方法就是seek(),下标从零开始
+
+	每次操作文件，他不会更新，而是会以追加的形式来操作文件
+	但是注意：在指定位置插入，会覆盖后面的数据，而不是真正的插入数据
+
+	(1)可以按照文件指针的位置写数据和读数据。
+	(2)案例：
+		A:写数据
+		B:读数据
+		C:获取和改变文件指针的位置
+
+7:合并流(理解)
+	(1)把多个输入流的数据写到一个输出流中。
+	(2)构造方法：
+		A:SequenceInputStream(InputStream s1, InputStream s2) -------------这是合并两个
+		B:SequenceInputStream(Enumeration<? extends InputStream> e) -------这是合并多个
+			// 通过简单的回顾我们知道了Enumeration是Vector中的一个方法的返回值类型。
+			// Enumeration<E> elements()
+			Vector<InputStream> v = new Vector<InputStream>();
+			InputStream s1 = new FileInputStream("ByteArrayStreamDemo.java");
+			InputStream s2 = new FileInputStream("CopyFileDemo.java");
+			InputStream s3 = new FileInputStream("DataStreamDemo.java");
+			v.add(s1);
+			v.add(s2);
+			v.add(s3);
+			Enumeration<InputStream> en = v.elements();
+			SequenceInputStream sis = new SequenceInputStream(en);
+			BufferedOutputStream bos = new BufferedOutputStream(
+					new FileOutputStream("Copy.java"));
+
+8:序列化流(理解)
+
+	理解：序列化就是用ObjectOutputSrteam把对象的基本数据类型和图形存入OutputStream流中，从而可以写入文件。----------这当中可以在网络中传输
+	      而把存入文件的对象读取出来就是用ObjectInputStream流来完成------反序列化，也叫做（重构）
+
+	 * 序列化流：把对象按照流一样的方式存入文本文件或者在网络中传输。对象 -- 流数据(ObjectOutputStream)
+ 	 * 反序列化流:把文本文件中的流对象数据或者网络中的流对象数据还原成对象。流数据 -- 对象(ObjectInputStream)
+
+	(1)可以把对象写入文本文件或者在网络中传输
+	(2)如何实现序列化呢?
+		让被序列化的对象所属类实现序列化接口。-----------某个类要被序列化就要实现一个接口（Serializable）
+							 * 该接口居然没有任何方法，类似于这种没有方法的接口被称为标记接口。
+			写入文件后发现，读不懂。那么可以用ObjectInputStream来反序列化
+
+		该接口是一个标记接口。没有功能需要实现。
+	(3)注意问题：
+		把数据写到文件后，在去修改类会产生一个问题。
+		如何解决该问题呢?
+			在类文件中，给出一个固定的序列化id值。
+			而且，这样也可以解决黄色警告线问题
+	(4)面试题：
+		什么时候序列化?          把对象按照流一样的方式存入文本文件或者在网络中传输
+		如何实现序列化?          创建序列化对象，创建被序列化对象，并实现Serializable接口，调用方法写入对象，释放流
+		什么是反序列化?		 将文件、或网络中的对象还原成对象
+
+--------------------------------------------------------------
+序列化代码：	// 创建序列化流对象
+		ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("oos.txt"));
+
+		// 创建对象
+		Person p = new Person("林青霞", 27);
+
+		// public final void writeObject(Object obj)
+		oos.writeObject(p);
+
+		// 释放资源
+		oos.close();
+
+反序列化代码：// 创建反序列化对象
+		ObjectInputStream ois = new ObjectInputStream(new FileInputStream("oos.txt"));
+
+		// 还原对象
+		Object obj = ois.readObject();
+
+		// 释放资源
+		ois.close();
+
+		// 输出对象
+		System.out.println(obj);
+------------------------------------------------------------------------------
+序列化注意事项1：一个类要被序列化就要实现一个接口，但是会出现黄色警告线，它是告诉我们要指明序列化ID
+	如果我们不指明：那么我们序列化对象到文件后，我们直接动原来的java文件，那么我们在读取的时候就会报错，因为序列化ID不一致
+			当然啦，我们可以重写写入，然后再读就不会有错，但是如果我们不想重写写入呢？那就指明ID，固定它不变吧
+	如果我们指明：那么序列化ID就固定了，我们该动源java文件后，读取序列化恢复成对象不会报错。
+			我们直接点击黄色警告线就可以看提示标记固定ID了
+
+
+序列化注意事项2：一个类中有很多成员变量，如果我们不想某一些成员被序列化那该怎么办？
+	使用transient关键字就可以声明不需要序列化的成员变量了。
+	private transient int age;
+	效果是：这个变量还是会被序列化，但是它的值不会，会是一个默认值
+------------------------------------------------------------------------------
+
+
+9:Properties(理解)
+
+----------------------------------------------------------------------------------------------------
+ * Properties:属性集合类。是一个可以和IO流相结合使用的集合类。
+ * Properties 可保存在流中或从流中加载。属性列表中每个键及其对应值都是一个字符串。 
+ * 
+ * 是Hashtable的子类，说明是一个Map集合。--------Map不能用for遍历，要么先得到所有key，要么得到所有对，两种方法
+----------------------------------------------------------------------------------------------------
+
+	理解：Properties 类表示了一个持久的属性集。Properties 可保存在流中或从流中加载。属性列表中每个键及其对应值都是一个字符串。 
+	他是Map子类，所以作为map来使用，方法和效果都和普通的map对象类似
+
+ * 特殊功能：-----------这三个方法是常用的方法
+ * public Object setProperty(String key,String value)：添加元素
+ * public String getProperty(String key):获取元素
+ * public Set<String> stringPropertyNames():获取所有的键的集合
+
+Properties和IO结合使用：-------------这两个才是常用的
+ * 这里的集合必须是Properties集合：
+ * public void load(Reader reader):把文件中的数据读取到集合中
+ * public void store(Writer writer,String comments):把集合中的数据存储到文件
+注意：这个文件数据必须是键值对类型
+
+	利用这三个方法就可以操作属性配置文件了。--------这是获取配置文件的内容
+
+获取：		     -------------------------------------------获取步骤：创建对象，加载文件数据，获取数据
+		Properties p = new Properties();
+		p.load(new FileReader("test.properties"));
+		Set<String> sets = p.stringPropertyNames();
+		for(String s : sets)
+			System.out.println(p.getProperty(s));
+        其实获取跟HsahMap的方法一样，要么获取单个，要么获取全部key  或者  全部的  键值对对象
+
+----------------------------------------------------------------获取步骤：创建对象，设置数据，创建流对象，写入数据，关闭流资源
+存储：		Properties prop = new Properties();
+		prop.setProperty("林青霞", "27");
+		prop.setProperty("武鑫", "30");
+		prop.setProperty("刘晓曲", "18");
+		
+		//public void store(Writer writer,String comments):把集合中的数据存储到文件
+		Writer w = new FileWriter("name.txt");
+		prop.store(w, "helloworld");-----------注意第二个参数就是一个描述作用，随便给，如果是中文则会乱码
+		w.close();
+		注意：写入的数据上面有文字，都是用#开头，说明这个属性文件的注释。
+		注意：这种写入会覆盖原来的文件的信息
+-----------------------------------------------------------------
+用处：
+	配置文件
+	游戏进度保存和加载	
+
+
+-----------------------------------------------------------------
+
+	(1)是一个集合类，Hashtable的子类
+	(2)特有功能
+		A:public Object setProperty(String key,String value)
+		B:public String getProperty(String key)
+		C:public Set<String> stringPropertyNames()
+	(3)和IO流结合的方法
+		把键值对形式的文本文件内容加载到集合中
+		public void load(Reader reader)
+		public void load(InputStream inStream)
+
+		把集合中的数据存储到文本文件中
+		public void store(Writer writer,String comments)
+		public void store(OutputStream out,String comments)
+	(4)案例：
+		A:根据给定的文件判断是否有键为"lisi"的，如果有就修改其值为100
+		B:写一个程序实现控制猜数字小游戏程序不能玩超过5次
+
+
+
+
+10:NIO(了解)
+	(1)JDK4出现的NIO，对以前的IO操作进行了优化，提供了效率。但是大部分我们看到的还是以前的IO
+	(2)JDK7的NIO的使用	
+		Path:路径
+		Paths:通过静态方法返回一个路径
+		Files:提供了常见的功能
+			复制文本文件
+			把集合中的数据写到文本文件
+-------------------------------------------------------------------------------------------------
+ * nio包在JDK4出现，提供了IO流的操作效率。但是目前还不是大范围的使用。
+ * 有空的话了解下，有问题再问我。
+ * 
+ * JDK7的之后的nio：
+ * Path:路径
+ * Paths:有一个静态方法返回一个路径
+ * 		public static Path get(URI uri)
+ * Files:提供了静态方法供我们使用
+ * 		public static long copy(Path source,OutputStream out):复制文件
+ * 		public static Path write(Path path,Iterable<? extends CharSequence> lines,Charset cs,OpenOption... options)
+ */
+public class NIODemo {
+	public static void main(String[] args) throws IOException {
+		// public static long copy(Path source,OutputStream out)
+		// Files.copy(Paths.get("ByteArrayStreamDemo.java"), new
+		// FileOutputStream(
+		// "Copy.java"));
+
+		ArrayList<String> array = new ArrayList<String>();
+		array.add("hello");
+		array.add("world");
+		array.add("java");
+		Files.write(Paths.get("array.txt"), array, Charset.forName("GBK"));
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
