@@ -1,0 +1,74 @@
+class Users{
+    private String name;
+    private int age;
+
+    Users(){}
+
+    Users(String name,int age){
+        this.name = name;
+        this.age = age;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(int age) {
+        this.age = age;
+    }
+}
+
+        Users u1 = new Users("u1",10);
+        Users u2 = new Users("u1",20);
+        Users u3 = new Users("u2",30);
+        Users u4 = new Users("u2",40);
+        Users u5 = new Users("u2",50);
+        Users u6 = new Users("u3",60);
+        List<Users> list = new ArrayList<>();
+        list.add(u1);list.add(u2);list.add(u3);list.add(u4);list.add(u5);list.add(u6);
+
+===================================================toMap
+
+        Map<Integer, Users> collect = list.stream().collect(Collectors.toMap(
+                u -> u.getAge(),			//注意这里，如果有相同的age，那么会错误    这个就是key
+                u -> u                           //这个就是 value
+        ));
+
+        System.out.println(JSON.toJSONString(collect));
+		
+		注意：这中将list转为map，key是不可以重复的，不然会报错
+		
+		
+===================================================groupingBy
+		
+		Map<String, List<Users>> collect = list.stream().collect(Collectors.groupingBy(Users::getName));
+		这就是分组
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		

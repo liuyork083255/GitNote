@@ -1,0 +1,74 @@
+        JSONObject j1 = new JSONObject();
+        j1.put("bondKey","1Y");
+
+        JSONObject j2 = new JSONObject();
+        j2.put("bondKey","1M");
+
+        JSONObject j3 = new JSONObject();
+        j3.put("bondKey","6M");
+
+        JSONObject j4 = new JSONObject();
+        j4.put("bondKey","3Y");
+
+        JSONObject j5 = new JSONObject();
+        j5.put("bondKey","3M");
+
+        JSONObject j6 = new JSONObject();
+        j6.put("bondKey","2Y");
+
+
+        List<JSONObject> list = new ArrayList<>();
+        list.add(j1);list.add(j2);list.add(j3);list.add(j4);list.add(j5);list.add(j6);
+
+
+//        list.sort((jo1,jo2) ->jo1.getString("bondKey").substring(jo1.getString("bondKey").length() - 1)
+//        .compareTo(jo2.getString("bondKey").substring(jo2.getString("bondKey").length() - 1)));
+			这种写法可以被下面的方式替代
+
+//        list.sort(Comparator.comparing(jo -> jo.getString("bondKey").substring(jo.getString("bondKey").length() - 1)));
+//        list.sort(Comparator.comparing(User::getName));
+
+
+        list.sort(Comparator.comparing(jo -> {
+            String period = jo.getString("bondKey");
+            if(org.apache.commons.lang3.StringUtils.contains(period,"M") && period.length() > 1){
+                return Integer.parseInt(period.substring(0,period.length() - 1)) * 30;
+            }else if(org.apache.commons.lang3.StringUtils.contains(period,"Y") && period.length() > 1){
+                return Integer.parseInt(period.substring(0,period.length() - 1)) * 360;
+            }else{
+                return Integer.MAX_VALUE;
+            }
+        }));
+		当然，最后还可以反转的，通过调用.reversed()
+
+        /*
+        注意：分组排序只能用于不同的列上，比如有name和age，那么可以先根据name排序，然后根据age排序
+            比如：humans.sort(Comparator.comparing(Human::getName).thenComparing(Human::getAge));
+        不能根据一个列来两组分组排序，比如先是根据name的某一种规则排序，然后根据name的另一种规则排序，这样是不可以的
+         */
+
+        list.forEach(l -> System.out.println(l.getString("bondKey")));
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		

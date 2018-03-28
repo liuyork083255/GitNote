@@ -1,0 +1,33 @@
+参考链接：http://blog.csdn.net/weixin_39471249/article/details/79121291
+
+redis命令setnx
+	SETNX key value
+	将 key 的值设为 value ，当且仅当 key 不存在。
+	若给定的 key 已经存在，则 SETNX 不做任何动作。
+	SETNX 是『SET if Not eXists』(如果不存在，则 SET)的简写。
+
+	由于redis是单线程的，所以能够保证分布式高并发性
+
+核心思想就是就是利用setnx设置一个值，如果返回值是1，所以设置成功，那么意味着获取锁成功，
+如果是返回值是0，说明这个key存在，那么肯定有进程或者线程已经设置过了，意味着获取锁失败。
+
+利用这一特性，实现分布式锁，但是需要注意如果获取锁的机器宕机，那么这个锁就永远不会被释放了，所以必须设置爱锁超时
+关于锁超时有两种：
+	1 set(key,value,"NX","EX",10) 从 Redis 2.6.12 版本开始，set命令可以设置nx特性，也就是等价setnx，同时还可以设置锁的超时时间
+	2 setnx(key,"10") 用value代表超时时间，然后等待的锁轮训访问判断
+
+上面两种的超时必须考虑一个问题：
+	当a获取setnx锁，a线程崩溃或超时，b、c线程同时get到old，且判断超时，可能出现b线程delete a线程的锁，
+	并且setnx后；c线程又将b线程的锁delete,并且setnx。这种情况完全锁不住线程了。
+
+解决方案是在value上做文章，而且用getset命令：
+	就是将value值设置成一个跟时间相关的值，然后每次获取的时候采用getset，判断返回值和当前值大小比较
+	当a获取setnx锁，a线程崩溃或超时，b线程getset，获取old且判断超时，c线程getset，获取old（此时这个值是b刚刚set进去的），
+	判断未超时，c继续等待。b线程delete a线程的锁，并且setnx后。这种情况是安全的。
+
+	当然，这里还有一个问题就是在分布式中，多个进程是在不同服务器运行，这个时间就不能用 System.currentTimeMillis() 来获取
+	而是需要获取统一的时间值，比如可以获取redis的时间来判断即可
+	
+	
+	
+	

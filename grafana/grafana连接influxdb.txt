@@ -1,14 +1,14 @@
-连接前首先要连接数据库
+脕卢陆脫脟掳脢脳脧脠脪陋脕卢陆脫脢媒戮脻驴芒
 
-其次就是配置数据，从数据库中拿出数据来，进行展示
-
-
-参考文献:
-
-配置数据 ：http://www.mamicode.com/info-detail-1640786.html
+脝盲麓脦戮脥脢脟脜盲脰脙脢媒戮脻拢卢麓脫脢媒戮脻驴芒脰脨脛脙鲁枚脢媒戮脻脌麓拢卢陆酶脨脨脮鹿脢戮
 
 
-仪表盘各个字段的解释说明：http://blog.csdn.net/tony_bo/article/details/54095616
+虏脦驴录脦脛脧脳:
+
+脜盲脰脙脢媒戮脻 拢潞http://www.mamicode.com/info-detail-1640786.html
+
+
+脪脟卤铆脜脤赂梅赂枚脳脰露脦碌脛陆芒脢脥脣碌脙梅拢潞http://blog.csdn.net/tony_bo/article/details/54095616
 
 
 
